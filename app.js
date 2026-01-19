@@ -125,7 +125,7 @@ function renderQuestion() {
           step="${question.step}" 
           value="${currentValue}"
         />
-        <span class="slider-value" id="${question.id}-value">
+        <span class="slider-value numeric" id="${question.id}-value">
           ${formatSliderValue(currentValue, question)}
         </span>
       </div>
@@ -500,9 +500,9 @@ function generateWarnings(answers) {
     // 夜間帰宅頻度に基づく警告
     if (answers.nightReturn === 'daily' || answers.nightReturn === '3-4times') {
         warnings.push({
-            title: '夜間帰宅が多い',
-            risk: '夜道の安全性を最優先に。街灯が多いルート、交番が近い物件を選ぶべき。',
-            parentConcern: '親が最も心配するポイント。内見時に夜の雰囲気も確認を。',
+            title: '夜間帰宅が多い傾向',
+            risk: '夜道の安全性を重視する傾向があります。街灯が多いルート、交番が近い物件を検討されることをおすすめします。',
+            parentConcern: '親が心配されやすいポイントです。内見時に夜の雰囲気も確認されると安心です。',
             severity: 'high'
         });
     }
@@ -510,9 +510,9 @@ function generateWarnings(answers) {
     // 予算に基づく警告
     if (answers.budget < 40000) {
         warnings.push({
-            title: '家賃が低すぎる',
-            risk: '極端に安い物件は、築年数が古い、設備が不十分、立地が悪いなどのリスクあり。',
-            parentConcern: '安全性や生活環境に問題がある可能性。',
+            title: '家賃が低めの設定',
+            risk: '極端に安い物件は、築年数が古い、設備が不十分、立地が悪いなどの傾向があります。',
+            parentConcern: '安全性や生活環境について、より慎重な確認が必要な場合があります。',
             severity: 'medium'
         });
     }
@@ -612,7 +612,7 @@ function renderMeter(containerId, score, label) {
     container.innerHTML = `
     <div class="meter-label">
       <span class="meter-title">${label}</span>
-      <span class="meter-score">${score}<span style="font-size: 16px;">/100</span></span>
+      <span class="meter-score numeric">${score}<span style="font-size: 16px; font-family: var(--font-jp);">/100</span></span>
     </div>
     <div class="meter-bar">
       <div class="meter-fill" style="width: ${score}%"></div>
