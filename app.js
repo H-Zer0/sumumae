@@ -37,6 +37,11 @@ function initializeApp() {
         navigateToScreen('knowledge');
     });
 
+    // ホームからの用語解説ボタン
+    document.getElementById('view-knowledge-from-top-btn')?.addEventListener('click', () => {
+        navigateToScreen('knowledge');
+    });
+
     document.getElementById('back-to-result-btn')?.addEventListener('click', () => {
         navigateToScreen('result');
     });
@@ -54,6 +59,19 @@ function initializeApp() {
         navigateToScreen('top');
     });
 
+    // ボトムナビゲーション
+    document.querySelectorAll('.bottom-nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const screen = item.dataset.screen;
+            if (screen === 'diagnosis') {
+                // 診断画面は診断開始ボタンと同じ動作
+                navigateToScreen('diagnosis');
+            } else {
+                navigateToScreen(screen);
+            }
+        });
+    });
+
     // 診断フローの初期化
     renderQuestion();
 
@@ -63,6 +81,9 @@ function initializeApp() {
 
     // 用語解説の初期化
     renderKnowledgeBase();
+
+    // 初期画面のボトムナビ状態を更新
+    updateBottomNav();
 }
 
 // ==========================================
@@ -87,7 +108,22 @@ function navigateToScreen(screenName) {
         } else if (screenName === 'result') {
             renderResult();
         }
+
+        // ボトムナビの状態を更新
+        updateBottomNav();
     }
+}
+
+// ボトムナビゲーションのアクティブ状態を更新
+function updateBottomNav() {
+    document.querySelectorAll('.bottom-nav-item').forEach(item => {
+        const screen = item.dataset.screen;
+        if (screen === state.currentScreen) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
 }
 
 // ==========================================

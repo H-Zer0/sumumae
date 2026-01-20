@@ -40,6 +40,9 @@
                 <button id="start-diagnosis-btn" class="btn btn-primary btn-large">
                     診断を始める
                 </button>
+                <button id="view-knowledge-from-top-btn" class="btn btn-secondary" style="margin-top: 16px;">
+                    📚 用語解説を見る
+                </button>
             </div>
 
             <div class="features">
@@ -228,6 +231,22 @@
             }
         });
     </script>
+
+    <!-- ボトムナビゲーション（スマホ用） -->
+    <nav id="bottom-nav" class="bottom-nav">
+        <button class="bottom-nav-item" data-screen="top">
+            <span class="bottom-nav-icon">🏠</span>
+            <span class="bottom-nav-label">ホーム</span>
+        </button>
+        <button class="bottom-nav-item" data-screen="diagnosis">
+            <span class="bottom-nav-icon">📝</span>
+            <span class="bottom-nav-label">診断</span>
+        </button>
+        <button class="bottom-nav-item" data-screen="knowledge">
+            <span class="bottom-nav-icon">📚</span>
+            <span class="bottom-nav-label">用語解説</span>
+        </button>
+    </nav>
 
 </body>
 

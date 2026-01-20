@@ -742,3 +742,64 @@ p {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
 }
+
+/* ==========================================
+   17. ボトムナビゲーション（スマホ用）
+   ========================================== */
+.bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    padding: 8px 0;
+    z-index: 1000;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--color-text-secondary);
+}
+
+.bottom-nav-item:hover {
+    color: var(--color-accent);
+    background: rgba(62, 84, 211, 0.05);
+}
+
+.bottom-nav-item.active {
+    color: var(--color-accent);
+}
+
+.bottom-nav-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.bottom-nav-label {
+    font-size: var(--font-size-tiny);
+    font-weight: var(--font-weight-medium);
+}
+
+/* スマホでボトムナビを表示 */
+@media (max-width: 768px) {
+    .bottom-nav {
+        display: flex;
+    }
+
+    /* ボトムナビの高さ分、画面下部に余白を追加 */
+    .screen {
+        padding-bottom: 80px;
+    }
+}
