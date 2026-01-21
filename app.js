@@ -826,7 +826,7 @@ function renderGuideContent(section) {
             // マークダウン的な太字記法 (**text**) をHTMLに変換
             const formattedItem = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             return `
-                    <li class="warning-item" style="border-left-color: var(--color-text-primary);">
+                    <li class="warning-item" style="border-left-color: var(--color-accent-b);">
                         <span class="warning-icon text-primary">✓</span>
                         <div class="warning-content">
                             <p class="warning-text" style="color: var(--color-text-primary); font-size: 15px;">${formattedItem}</p>
