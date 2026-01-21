@@ -91,7 +91,7 @@ function navigateToScreen(screenName) {
 
         // 画面ごとの処理
         if (screenName === 'diagnosis') {
-            // 特にリセットせず続きから
+            renderQuestion();
         } else if (screenName === 'result') {
             renderResult();
         }
