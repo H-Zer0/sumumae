@@ -72,7 +72,6 @@ function initializeApp() {
     // 用語解説・ガイドの初期化
     renderKnowledgeBase();
     renderInspectionGuide();
-    initKnowledgeTabs();
 
     // 初期画面のボトムナビ状態を更新
     updateBottomNav();
@@ -821,33 +820,6 @@ function renderChecklistItems(items) {
             </div>
         </div>
     `).join('');
-}
-
-// タブ切り替え初期化
-function initKnowledgeTabs() {
-    const tabKnowledge = document.getElementById('tab-knowledge');
-    const tabGuide = document.getElementById('tab-guide');
-    const sectionKnowledge = document.getElementById('knowledge-section');
-    const sectionGuide = document.getElementById('guide-section');
-
-    if (!tabKnowledge || !tabGuide) return;
-
-    function switchTab(target) {
-        if (target === 'knowledge') {
-            tabKnowledge.className = 'btn btn-primary btn-block';
-            tabGuide.className = 'btn btn-secondary btn-block';
-            sectionKnowledge.classList.remove('hidden');
-            sectionGuide.classList.add('hidden');
-        } else {
-            tabKnowledge.className = 'btn btn-secondary btn-block';
-            tabGuide.className = 'btn btn-primary btn-block';
-            sectionKnowledge.classList.add('hidden');
-            sectionGuide.classList.remove('hidden');
-        }
-    }
-
-    tabKnowledge.addEventListener('click', () => switchTab('knowledge'));
-    tabGuide.addEventListener('click', () => switchTab('guide'));
 }
 
 // ==========================================

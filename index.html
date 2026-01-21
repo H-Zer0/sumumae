@@ -204,38 +204,89 @@
     <!-- ==========================================
        用語解説画面 (独立)
        ========================================== -->
+    <!-- ==========================================
+       用語解説画面 (独立)
+       ========================================== -->
     <div id="knowledge-screen" class="screen">
         <div class="container">
-            <div style="font-weight: 500; margin-bottom: 4px;">✓ ${item.item}</div>
-            <div style="font-size: 14px; color: var(--color-text-light);">${item.method}</div>
+            <h1 class="text-center">用語解説</h1>
+            <p class="text-center text-small" style="margin-bottom: 32px;">
+                物件選びで知っておきたい専門用語を解説。
+            </p>
+
+            <div id="knowledge-accordion"></div>
+
+            <div class="text-center mt-lg">
+                <button id="home-from-knowledge-btn" class="btn btn-secondary btn-large">
+                    ホームに戻る
+                </button>
+            </div>
+
+            <div style="height: 64px;"></div>
         </div>
-        `;
-        });
+    </div>
 
-        html += '
-    </div>';
-    });
+    <!-- ==========================================
+       内見ガイド画面 (独立)
+       ========================================== -->
+    <div id="guide-screen" class="screen">
+        <div class="container">
+            <h1 class="text-center">内見ガイド</h1>
+            <p class="text-center text-small" style="margin-bottom: 32px;">
+                持ち物からチェックポイントまで完全網羅。
+            </p>
 
-    checklistContainer.innerHTML = html;
-    }
-    });
-    </script>
+            <div id="inspection-guide-list"></div>
+
+            <div class="text-center mt-lg">
+                <button id="home-from-guide-btn" class="btn btn-secondary btn-large">
+                    ホームに戻る
+                </button>
+            </div>
+
+            <div style="height: 64px;"></div>
+        </div>
+    </div>
 
     <!-- ボトムナビゲーション（スマホ用） -->
     <nav id="bottom-nav" class="bottom-nav">
         <button class="bottom-nav-item" data-screen="top">
-            <span class="bottom-nav-icon">🏠</span>
+            <div class="bottom-nav-icon">
+                <svg width="24" height="24">
+                    <use href="#icon-home"></use>
+                </svg>
+            </div>
             <span class="bottom-nav-label">ホーム</span>
         </button>
         <button class="bottom-nav-item" data-screen="diagnosis">
-            <span class="bottom-nav-icon">📝</span>
+            <div class="bottom-nav-icon">
+                <svg width="24" height="24">
+                    <use href="#icon-file-text"></use>
+                </svg>
+            </div>
             <span class="bottom-nav-label">診断</span>
         </button>
+        <button class="bottom-nav-item" data-screen="guide">
+            <div class="bottom-nav-icon">
+                <svg width="24" height="24">
+                    <use href="#icon-map"></use>
+                </svg>
+            </div>
+            <span class="bottom-nav-label">ガイド</span>
+        </button>
         <button class="bottom-nav-item" data-screen="knowledge">
-            <span class="bottom-nav-icon">📚</span>
+            <div class="bottom-nav-icon">
+                <svg width="24" height="24">
+                    <use href="#icon-book-open"></use>
+                </svg>
+            </div>
             <span class="bottom-nav-label">用語解説</span>
         </button>
     </nav>
+
+    <!-- JavaScript -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
 
 </body>
 
