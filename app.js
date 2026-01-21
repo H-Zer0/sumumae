@@ -627,7 +627,7 @@ function renderResult() {
         html += '<p class="text-center">特に大きな注意点は見つかりませんでした。</p>';
     } else {
         html += warnings.map(warning => `
-            <div class="warning-item ${warning.severity}" style="border-left: 3px solid var(--color-text-primary); padding-left: 12px; margin-bottom: 12px; background: var(--color-bg-page);">
+            <div class="warning-item ${warning.severity}" style="border-left: 3px solid var(--color-accent-b); padding-left: 12px; margin-bottom: 12px; background: var(--color-bg-page);">
                 <div style="display: flex; align-items: start; gap: 8px;">
                     <div class="warning-icon">${getSeverityIcon(warning.severity)}</div>
                     <div>
@@ -693,7 +693,7 @@ function renderMeter(containerId, score, label) {
       <span class="meter-score numeric">${score}<span style="font-size: 16px; font-family: var(--font-jp);">/100</span></span>
     </div>
     <div class="meter-bar">
-      <div class="meter-fill" style="width: ${score}%; background-color: var(--color-text-primary);"></div>
+      <div class="meter-fill" style="width: ${score}%; background-color: var(--color-accent-a);"></div>
     </div>
   `;
 }
