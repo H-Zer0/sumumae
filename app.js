@@ -119,6 +119,17 @@ function updateBottomNav() {
     });
 }
 
+function updateHeaderNav() {
+    document.querySelectorAll('.nav-link').forEach(link => {
+        const screen = link.dataset.screen;
+        if (screen === state.currentScreen) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+}
+
 // ==========================================
 // 診断フロー
 // ==========================================
