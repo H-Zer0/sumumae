@@ -800,3 +800,173 @@ p {
     outline: 2px solid var(--color-accent-a);
     outline-offset: 2px;
 }
+
+/* ==========================================
+   18. チェックリストスタイル
+   ========================================== */
+.checklist-category-title {
+    font-size: var(--font-heading-m);
+    color: var(--color-accent-a);
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid var(--color-divider);
+}
+
+.checklist {
+    list-style: none;
+    margin-bottom: var(--spacing-xl);
+}
+
+.checklist-item {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-m);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    page-break-inside: avoid;
+    /* 印刷時の改ページ対策 */
+}
+
+.checklist-item.critical {
+    border-left: 4px solid var(--color-accent-b);
+}
+
+.checklist-item.high {
+    border-left: 4px solid var(--color-accent-a);
+}
+
+.checklist-item.medium {
+    border-left: 4px solid var(--color-border);
+}
+
+.checklist-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.checklist-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: var(--font-weight-bold);
+    color: white;
+    flex-shrink: 0;
+}
+
+.checklist-badge.critical {
+    background-color: var(--color-accent-b);
+}
+
+.checklist-badge.high {
+    background-color: var(--color-accent-a);
+}
+
+.checklist-badge.medium {
+    background-color: var(--color-text-tertiary);
+}
+
+.checklist-title {
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-body);
+}
+
+.checklist-content {
+    padding-left: 0;
+}
+
+.checklist-method {
+    font-size: var(--font-body);
+    margin-bottom: var(--spacing-xs);
+}
+
+.checklist-details {
+    font-size: var(--font-caption);
+    color: var(--color-text-secondary);
+    background: var(--color-bg-page);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-s);
+    margin-top: var(--spacing-xs);
+    white-space: pre-wrap;
+    /* 改行を反映 */
+}
+
+/* ==========================================
+   19. 用語解説スタイル調整
+   ========================================== */
+.accordion-body {
+    white-space: pre-wrap;
+    /* 改行を反映 */
+}
+
+/* ==========================================
+   20. 印刷スタイル
+   ========================================== */
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+
+    .screen {
+        display: none !important;
+    }
+
+    #result-screen {
+        display: block !important;
+        padding: 0 !important;
+        animation: none !important;
+        /* アニメーション無効化 */
+    }
+
+    /* 印刷時に隠す要素 */
+    .hero,
+    .bottom-nav,
+    .nav-buttons,
+    #reset-area,
+    button,
+    .risk-card,
+    .warning-list,
+    .meter-container,
+    .card,
+    .accordion-item {
+        /* 必要に応じてカードなども隠すか、チェックリストだけ印刷するか選択 */
+        /* ここではシンプルにチェックリスト以外も表示するが、ボタンなどは隠す */
+    }
+
+    .hero-title,
+    .hero-subtitle,
+    .features,
+    #start-diagnosis-btn,
+    #view-knowledge-from-top-btn {
+        display: none !important;
+    }
+
+    /* 印刷ボタン自体を隠す */
+    button {
+        display: none !important;
+    }
+
+    /* 印刷用にレイアウト調整 */
+    .container {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .checklist-item {
+        break-inside: avoid;
+        border: 1px solid #ccc;
+        box-shadow: none;
+    }
+
+    /* 印刷時は詳細も綺麗に表示 */
+    .checklist-details {
+        background: none;
+        color: black;
+        border: 1px dashed #ccc;
+    }
+}
