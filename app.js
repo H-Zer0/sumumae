@@ -81,6 +81,8 @@ function initializeApp() {
 
     // 用語解説の初期化
     renderKnowledgeBase();
+    renderInspectionGuide();
+    initKnowledgeTabs();
 
     // 初期画面のボトムナビ状態を更新
     updateBottomNav();
@@ -667,80 +669,8 @@ function getSeverityIcon(severity) {
 }
 
 // ==========================================
-// 内見チェックリストのレンダリング
+// 用語解説
 // ==========================================
-function renderInspectionChecklist() {
-    const container = document.getElementById('inspection-checklist');
-    if (!container) return;
-
-    // カテゴリごとにグループ化
-    const groupedList = INSPECTION_CHECKLIST.reduce((acc, item) => {
-        if (!acc[item.category]) {
-            acc[item.category] = [];
-        }
-        acc[item.category].push(item);
-        return acc;
-    }, {});
-
-    let html = '';
-
-    // カテゴリの表示順序を定義（data.jsの定義順になるように制御）
-    const categoryOrder = [
-        '室内・日当たり', '室内・収納', '室内・水回り', '室内・設備', '室内・状態',
-        '室内・防音', '室内・構造', '室内・通信', '室内・玄関', '室内・環境',
-        '共用部', '周辺環境'
-    ];
-
-    // 実際に存在するカテゴリだけを抽出して順序付け
-    const sortedCategories = Object.keys(groupedList).sort((a, b) => {
-        const indexA = categoryOrder.indexOf(a);
-        const indexB = categoryOrder.indexOf(b);
-        // 定義されていないカテゴリは後ろに
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return indexA - indexB;
-    });
-
-    sortedCategories.forEach(category => {
-        html += `<h3 class="checklist-category-title">${category}</h3>`;
-        html += '<ul class="checklist">';
-
-        groupedList[category].forEach(item => {
-            const importanceClass = item.importance === 'critical' ? 'critical' :
-                item.importance === 'high' ? 'high' : 'medium';
-
-            const badgeLabel = item.importance === 'critical' ? '絶対確認' :
-                item.importance === 'high' ? '重要' : '確認';
-
-            html += `
-                <li class="checklist-item ${importanceClass}">
-                    <div class="checklist-header">
-                        <span class="checklist-badge ${importanceClass}">${badgeLabel}</span>
-                        <span class="checklist-title">${item.item}</span>
-                    </div>
-                    <div class="checklist-content">
-                        <p class="checklist-method">${item.method}</p>
-                        ${item.details ? `<p class="checklist-details">💡 ${item.details}</p>` : ''}
-                    </div>
-                </li>
-            `;
-        });
-
-        html += '</ul>';
-    });
-
-    // 印刷ボタンの追加
-    html += `
-        <div class="text-center mt-lg">
-            <button onclick="window.print()" class="btn btn-secondary btn-block">
-                🖨 このリストを印刷する
-            </button>
-        </div>
-    `;
-
-    container.innerHTML = html;
-}
-
 // ==========================================
 // 用語解説
 // ==========================================
@@ -775,12 +705,154 @@ function renderKnowledgeBase() {
     container.innerHTML = html;
 
     // アコーディオンのイベントリスナー
-    document.querySelectorAll('.accordion-header').forEach(header => {
+    const headers = container.querySelectorAll('.accordion-header');
+    headers.forEach(header => {
         header.addEventListener('click', () => {
             const item = header.parentElement;
             item.classList.toggle('open');
         });
     });
+}
+
+// ==========================================
+// 内見完全ガイドレンダリング
+// ==========================================
+function renderInspectionGuide() {
+    const container = document.getElementById('inspection-guide-list');
+    if (!container || typeof INSPECTION_GUIDE_DATA === 'undefined') return;
+
+    let html = '';
+
+    INSPECTION_GUIDE_DATA.forEach(guide => {
+        html += `
+            <div class="card" style="margin-bottom: 32px;">
+                <h2 style="display: flex; align-items: center; gap: 8px;">
+                    <span>${guide.icon}</span>
+                    <span>${guide.title}</span>
+                </h2>
+                ${guide.description ? `<p style="margin-bottom: 24px;">${guide.description}</p>` : ''}
+                
+                ${guide.isChecklist ? renderChecklistItems(guide.items) : renderGuideSections(guide.sections)}
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function renderGuideSections(sections) {
+    if (!sections) return '';
+
+    return sections.map(section => `
+        <div class="guide-section" style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--color-divider);">
+            <h3 style="margin-bottom: 16px; color: var(--color-accent-a);">${section.subtitle}</h3>
+            ${section.description ? `<p style="margin-bottom: 16px;">${section.description}</p>` : ''}
+            
+            ${renderGuideContent(section)}
+        </div>
+    `).join('');
+}
+
+function renderGuideContent(section) {
+    if (section.type === 'checklist' || section.type === 'check-point') {
+        return `
+            <ul class="warning-list">
+                ${section.items.map(item => {
+            // マークダウン的な太字記法 (**text**) をHTMLに変換
+            const formattedItem = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            return `
+                    <li class="warning-item" style="border-left-color: var(--color-accent-a);">
+                        <span class="warning-icon">✓</span>
+                        <div class="warning-content">
+                            <p class="warning-text" style="color: var(--color-text-primary); font-size: 15px;">${formattedItem}</p>
+                        </div>
+                    </li>
+                `}).join('')}
+            </ul>
+        `;
+    } else if (section.type === 'list' || section.type === 'text-list') {
+        return `
+            <ul style="list-style: none; padding-left: 0;">
+                ${section.items.map(item => {
+            const formattedItem = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            return `
+                    <li style="margin-bottom: 12px; padding-left: 1.5em; position: relative;">
+                        <span style="position: absolute; left: 0; color: var(--color-accent-a);">•</span>
+                        ${formattedItem}
+                    </li>
+                `}).join('')}
+            </ul>
+        `;
+    } else if (section.type === 'comparison') {
+        return section.content.map(block => `
+            <div style="background: var(--color-bg-page); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                <h4 style="font-weight: bold; margin-bottom: 8px;">${block.heading}</h4>
+                <div style="margin-bottom: 8px;">
+                    <strong>メリット:</strong>
+                    <ul style="list-style: disc; padding-left: 20px; font-size: 14px;">
+                        ${block.merits.map(m => `<li>${m}</li>`).join('')}
+                    </ul>
+                </div>
+                <div>
+                    <strong>チェックポイント:</strong>
+                    <ul style="list-style: disc; padding-left: 20px; font-size: 14px;">
+                        ${block.checkpoints.map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `).join('');
+    }
+    return '';
+}
+
+function renderChecklistItems(items) {
+    // カテゴリごとにグループ化
+    const grouped = {};
+    items.forEach(item => {
+        if (!grouped[item.category]) grouped[item.category] = [];
+        grouped[item.category].push(item.label);
+    });
+
+    return Object.keys(grouped).map(category => `
+        <div style="margin-bottom: 24px;">
+            <h4 style="margin-bottom: 12px; border-bottom: 2px solid var(--color-accent-b); display: inline-block;">${category}</h4>
+            <div style="display: grid; gap: 12px;">
+                ${grouped[category].map(label => `
+                    <div style="display: flex; align-items: start; gap: 8px;">
+                        <div style="width: 20px; height: 20px; border: 2px solid var(--color-border); border-radius: 4px; flex-shrink: 0;"></div>
+                        <span>${label}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+// タブ切り替え初期化
+function initKnowledgeTabs() {
+    const tabKnowledge = document.getElementById('tab-knowledge');
+    const tabGuide = document.getElementById('tab-guide');
+    const sectionKnowledge = document.getElementById('knowledge-section');
+    const sectionGuide = document.getElementById('guide-section');
+
+    if (!tabKnowledge || !tabGuide) return;
+
+    function switchTab(target) {
+        if (target === 'knowledge') {
+            tabKnowledge.className = 'btn btn-primary btn-block';
+            tabGuide.className = 'btn btn-secondary btn-block';
+            sectionKnowledge.classList.remove('hidden');
+            sectionGuide.classList.add('hidden');
+        } else {
+            tabKnowledge.className = 'btn btn-secondary btn-block';
+            tabGuide.className = 'btn btn-primary btn-block';
+            sectionKnowledge.classList.add('hidden');
+            sectionGuide.classList.remove('hidden');
+        }
+    }
+
+    tabKnowledge.addEventListener('click', () => switchTab('knowledge'));
+    tabGuide.addEventListener('click', () => switchTab('guide'));
 }
 
 // ==========================================

@@ -163,7 +163,7 @@
     </div>
 
     <!-- ==========================================
-       用語解説画面
+       用語解説・ガイド画面
        ========================================== -->
     <div id="knowledge-screen" class="screen">
         <div class="container">
@@ -171,17 +171,34 @@
                 <button id="home-from-knowledge-btn" class="btn btn-secondary"
                     style="padding: 8px 16px; font-size: 14px;">🏠 ホームに戻る</button>
             </div>
-            <h1 class="text-center">用語解説</h1>
-            <p class="text-center text-small" style="margin-bottom: 32px;">
-                物件選びで知っておきたい用語を解説します。
+            <h1 class="text-center">知恵袋 & ガイド</h1>
+            <p class="text-center text-small" style="margin-bottom: 24px;">
+                専門用語の解説や、内見時に役立つ完全ガイドライン。
             </p>
 
-            <div id="knowledge-accordion"></div>
-
-            <div class="text-center mt-lg">
-                <button id="back-to-result-btn" class="btn btn-primary">結果に戻る</button>
+            <!-- タブナビゲーション -->
+            <div class="nav-buttons" style="margin-bottom: 32px; gap: 12px;">
+                <button id="tab-knowledge" class="btn btn-primary btn-block">用語解説</button>
+                <button id="tab-guide" class="btn btn-secondary btn-block">内見ガイド</button>
             </div>
+
+            <div id="knowledge-section">
+                <div id="knowledge-accordion"></div>
+            </div>
+
+            <div id="guide-section" class="hidden">
+                <div id="inspection-guide-list"></div>
+            </div>
+
+            <!-- ボトムスペーサー -->
+            <div style="height: 48px;"></div>
         </div>
+    </div>
+
+    <div class="text-center mt-lg">
+        <button id="back-to-result-btn" class="btn btn-primary">結果に戻る</button>
+    </div>
+    </div>
     </div>
 
     <!-- Scripts -->
