@@ -596,9 +596,6 @@ function generateRecommendations(answers) {
 // ==========================================
 // 結果表示
 // ==========================================
-// ==========================================
-// 結果表示
-// ==========================================
 function renderResult() {
     if (!state.result) return;
 
@@ -630,7 +627,7 @@ function renderResult() {
         html += '<p class="text-center">特に大きな注意点は見つかりませんでした。</p>';
     } else {
         html += warnings.map(warning => `
-            <div class="warning-item ${warning.severity}" style="border-left: 3px solid ${getSeverityColor(warning.severity)}; padding-left: 12px; margin-bottom: 12px; background: var(--color-bg-page);">
+            <div class="warning-item ${warning.severity}" style="border-left: 3px solid var(--color-text-primary); padding-left: 12px; margin-bottom: 12px; background: var(--color-bg-page);">
                 <div style="display: flex; align-items: start; gap: 8px;">
                     <div class="warning-icon">${getSeverityIcon(warning.severity)}</div>
                     <div>
@@ -659,7 +656,7 @@ function renderResult() {
         html += recommendations.map(rec => `
             <div style="margin-bottom: 16px; padding: 12px; background: var(--color-bg-page); border-radius: 8px;">
                 <h3 style="font-size: 16px; margin-bottom: 4px;">
-                    <svg width="16" height="16" style="vertical-align: middle; color: var(--color-accent-a); margin-right: 4px;"><use href="#icon-check-square"></use></svg>
+                    <svg width="16" height="16" style="vertical-align: middle; color: var(--color-text-primary); margin-right: 4px;"><use href="#icon-check-square"></use></svg>
                     ${rec.title}
                 </h3>
                 <p class="text-small">${rec.reason}</p>
@@ -678,37 +675,37 @@ function renderResult() {
 }
 
 function getSeverityColor(severity) {
-    const colors = {
-        critical: 'var(--color-accent-b)',
-        high: 'var(--color-accent-b)',
-        medium: 'var(--color-accent-a)',
-        low: 'var(--color-text-tertiary)'
-    };
-    return colors[severity] || colors.medium;
+    // ユーザー要望により全て黒色またはグレー系に統一
+    // 深刻度に関わらず統一感を優先
+    return 'var(--color-text-primary)';
 }
 
 function renderMeter(containerId, score, label) {
     const container = document.getElementById(containerId);
     if (!container) return; // 親要素がなくてもエラーにしない
 
+    // メーターの色もモノトーン化する場合
+    // ここではあえて進捗バーとしての視認性を保つため既存のCSSクラスに依存するが、
+    // 配色変数の変更が必要ならCSS側で行う。一旦JS側での強制色指定はしない。
     container.innerHTML = `
     <div class="meter-label">
       <span class="meter-title">${label}</span>
       <span class="meter-score numeric">${score}<span style="font-size: 16px; font-family: var(--font-jp);">/100</span></span>
     </div>
     <div class="meter-bar">
-      <div class="meter-fill" style="width: ${score}%"></div>
+      <div class="meter-fill" style="width: ${score}%; background-color: var(--color-text-primary);"></div>
     </div>
   `;
 }
 
 function getSeverityIcon(severity) {
-    // 絵文字をSVGアイコンに変更（ID参照）
+    // 全てモノクロアイコンに統一
+    const colors = 'style="color: var(--color-text-primary)"';
     const icons = {
-        critical: '<svg width="20" height="20" style="color: var(--color-accent-b)"><use href="#icon-alert-triangle"></use></svg>',
-        high: '<svg width="20" height="20" style="color: var(--color-accent-b)"><use href="#icon-alert-triangle"></use></svg>',
-        medium: '<svg width="20" height="20" style="color: var(--color-accent-a)"><use href="#icon-shield"></use></svg>',
-        low: '<svg width="20" height="20" style="color: var(--color-text-tertiary)"><use href="#icon-check-square"></use></svg>'
+        critical: `<svg width="20" height="20" ${colors}><use href="#icon-alert-triangle"></use></svg>`,
+        high: `<svg width="20" height="20" ${colors}><use href="#icon-alert-triangle"></use></svg>`,
+        medium: `<svg width="20" height="20" ${colors}><use href="#icon-shield"></use></svg>`,
+        low: `<svg width="20" height="20" ${colors}><use href="#icon-check-square"></use></svg>`
     };
     return icons[severity] || icons.medium;
 }
@@ -772,7 +769,7 @@ function renderInspectionGuide() {
                          <svg width="20" height="20"><use href="#icon-map"></use></svg>
                     </span>
                 </div>
-                <div class="accordion-content" ${guide.title.includes('チェック') ? 'style="max-height: none;"' : ''}> <!-- チェックリストなどは最初から開くか検討だが、統一感のため閉じる -->
+                <div class="accordion-content">
                     <div class="accordion-body">
                         ${guide.description ? `<p style="margin-bottom: 24px; color: var(--color-text-secondary);">${guide.description}</p>` : ''}
                         
@@ -787,19 +784,23 @@ function renderInspectionGuide() {
     setupAccordion(container);
 }
 
-// アコーディオンのセットアップ関数（共通化）
+// アコーディオンのセットアップ関数（改良版）
 function setupAccordion(container) {
     const headers = container.querySelectorAll('.accordion-header');
     headers.forEach(header => {
         header.addEventListener('click', () => {
             const item = header.parentElement;
+            const content = item.querySelector('.accordion-content');
 
-            // 他を閉じる（オプション）
-            // container.querySelectorAll('.accordion-item').forEach(i => {
-            //    if (i !== item) i.classList.remove('open');
-            // });
-
+            // 開閉切り替え
             item.classList.toggle('open');
+
+            if (item.classList.contains('open')) {
+                // コンテンツの高さを計算して設定
+                content.style.maxHeight = content.scrollHeight + 'px';
+            } else {
+                content.style.maxHeight = null;
+            }
         });
     });
 }
@@ -809,7 +810,7 @@ function renderGuideSections(sections) {
 
     return sections.map(section => `
         <div class="guide-section" style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--color-divider);">
-            <h3 style="margin-bottom: 16px; color: var(--color-accent-a);">${section.subtitle}</h3>
+            <h3 style="margin-bottom: 16px; color: var(--color-text-primary); font-weight: bold;">${section.subtitle}</h3>
             ${section.description ? `<p style="margin-bottom: 16px;">${section.description}</p>` : ''}
             
             ${renderGuideContent(section)}
@@ -825,8 +826,8 @@ function renderGuideContent(section) {
             // マークダウン的な太字記法 (**text**) をHTMLに変換
             const formattedItem = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             return `
-                    <li class="warning-item" style="border-left-color: var(--color-accent-a);">
-                        <span class="warning-icon">✓</span>
+                    <li class="warning-item" style="border-left-color: var(--color-text-primary);">
+                        <span class="warning-icon text-primary">✓</span>
                         <div class="warning-content">
                             <p class="warning-text" style="color: var(--color-text-primary); font-size: 15px;">${formattedItem}</p>
                         </div>
@@ -841,7 +842,7 @@ function renderGuideContent(section) {
             const formattedItem = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
             return `
                     <li style="margin-bottom: 12px; padding-left: 1.5em; position: relative;">
-                        <span style="position: absolute; left: 0; color: var(--color-accent-a);">•</span>
+                        <span style="position: absolute; left: 0; color: var(--color-text-primary);">•</span>
                         ${formattedItem}
                     </li>
                 `}).join('')}
@@ -879,7 +880,7 @@ function renderChecklistItems(items) {
 
     return Object.keys(grouped).map(category => `
         <div style="margin-bottom: 24px;">
-            <h4 style="margin-bottom: 12px; border-bottom: 2px solid var(--color-accent-b); display: inline-block;">${category}</h4>
+            <h4 style="margin-bottom: 12px; border-bottom: 2px solid var(--color-text-primary); display: inline-block;">${category}</h4>
             <div style="display: grid; gap: 12px;">
                 ${grouped[category].map(label => `
                     <div style="display: flex; align-items: start; gap: 8px;">

@@ -590,7 +590,8 @@ p {
 }
 
 .accordion-item.open .accordion-content {
-    max-height: 500px;
+    /* JSでscrollHeightを設定するため、ここでは指定しないか、noneにする */
+    /* max-height: 500px; は削除 */
 }
 
 .accordion-body {
