@@ -42,65 +42,37 @@ function initializeApp() {
         navigateToScreen('knowledge');
     });
 
-    // ホームからのガイドボタン（新規）
-    document.getElementById('view-guide-from-top-btn')?.addEventListener('click', () => {
-        navigateToScreen('guide');
-    });
-
     document.getElementById('back-to-result-btn')?.addEventListener('click', () => {
         navigateToScreen('result');
     });
 
-    // 結果画面からガイドへ
-    document.getElementById('go-to-guide-btn')?.addEventListener('click', () => {
-        navigateToScreen('guide');
-    });
-
     // ホームに戻るボタン
-    document.getElementById('home-from-diagnosis-btn')?.addEventListener('click', () => {
-        navigateToScreen('top');
-    });
-
-    document.getElementById('home-from-result-btn')?.addEventListener('click', () => {
-        navigateToScreen('top');
-    });
-
-    document.getElementById('home-from-knowledge-btn')?.addEventListener('click', () => {
-        navigateToScreen('top');
-    });
-
-    document.getElementById('home-from-guide-btn')?.addEventListener('click', () => {
-        navigateToScreen('top');
-    });
-
-    // 相互リンク
-    document.getElementById('go-to-guide-from-knowledge-btn')?.addEventListener('click', () => {
-        navigateToScreen('guide');
-    });
-
-    document.getElementById('go-to-knowledge-from-guide-btn')?.addEventListener('click', () => {
-        navigateToScreen('knowledge');
-    });
+    document.getElementById('home-from-diagnosis-btn')?.addEventListener('click', () => navigateToScreen('top'));
+    document.getElementById('home-from-result-btn')?.addEventListener('click', () => navigateToScreen('top'));
+    document.getElementById('home-from-knowledge-btn')?.addEventListener('click', () => navigateToScreen('top'));
+    document.getElementById('home-from-guide-btn')?.addEventListener('click', () => navigateToScreen('top'));
 
     // ボトムナビゲーション
     document.querySelectorAll('.bottom-nav-item').forEach(item => {
         item.addEventListener('click', () => {
             const screen = item.dataset.screen;
-            if (screen === 'diagnosis') {
-                // 診断画面は診断開始ボタンと同じ動作
-                navigateToScreen('diagnosis');
-            } else {
-                navigateToScreen(screen);
-            }
+            // 診断画面への遷移時、リセットするかどうかの判断はUXによるが、
+            // ユーザーは「続き」を見たい場合も多いのでそのまま遷移
+            navigateToScreen(screen);
         });
     });
 
     // 診断フローの初期化
     renderQuestion();
 
-    // 用語解説の初期化
+    // ナビゲーションボタン
+    document.getElementById('prev-btn')?.addEventListener('click', previousQuestion);
+    document.getElementById('next-btn')?.addEventListener('click', nextQuestion);
+
+    // 用語解説・ガイドの初期化
     renderKnowledgeBase();
     renderInspectionGuide();
+    initKnowledgeTabs();
 
     // 初期画面のボトムナビ状態を更新
     updateBottomNav();
@@ -110,9 +82,6 @@ function initializeApp() {
 // 画面遷移
 // ==========================================
 function navigateToScreen(screenName) {
-    // 画面遷移時に最上部へスクロール（重要修正）
-    window.scrollTo(0, 0);
-
     // すべての画面を非表示
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
@@ -126,14 +95,16 @@ function navigateToScreen(screenName) {
 
         // 画面ごとの処理
         if (screenName === 'diagnosis') {
-            state.currentQuestionIndex = 0;
-            renderQuestion();
+            // 特にリセットせず続きから
         } else if (screenName === 'result') {
             renderResult();
         }
 
         // ボトムナビの状態を更新
         updateBottomNav();
+
+        // 【重要】スクロール位置を最上部にリセット（スマホ対策）
+        window.scrollTo(0, 0);
     }
 }
 
@@ -141,6 +112,8 @@ function navigateToScreen(screenName) {
 function updateBottomNav() {
     document.querySelectorAll('.bottom-nav-item').forEach(item => {
         const screen = item.dataset.screen;
+        // activeクラスの切り替え
+        // SVGアイコンの色変更はCSSで制御（.bottom-nav-item.active .bottom-nav-icon { color: ... }）
         if (screen === state.currentScreen) {
             item.classList.add('active');
         } else {
@@ -153,6 +126,8 @@ function updateBottomNav() {
 // 診断フロー
 // ==========================================
 function renderQuestion() {
+    const question = DIAGNOSIS_QUESTIONS[state.currentQuestionIndex];
+    if (!question) return;
 
     const container = document.getElementById('question-container');
     const progressFill = document.getElementById('progress-fill');
@@ -678,18 +653,16 @@ function renderMeter(containerId, score, label) {
 }
 
 function getSeverityIcon(severity) {
+    // 絵文字をSVGアイコンに変更（ID参照）
     const icons = {
-        critical: '🚨',
-        high: '⚠️',
-        medium: '💡',
-        low: '✓'
+        critical: '<svg width="20" height="20" style="color: var(--color-accent-b)"><use href="#icon-alert-triangle"></use></svg>',
+        high: '<svg width="20" height="20" style="color: var(--color-accent-b)"><use href="#icon-alert-triangle"></use></svg>',
+        medium: '<svg width="20" height="20" style="color: var(--color-accent-a)"><use href="#icon-shield"></use></svg>',
+        low: '<svg width="20" height="20" style="color: var(--color-text-tertiary)"><use href="#icon-check-square"></use></svg>'
     };
-    return icons[severity] || '💡';
+    return icons[severity] || icons.medium;
 }
 
-// ==========================================
-// 用語解説
-// ==========================================
 // ==========================================
 // 用語解説
 // ==========================================
@@ -708,7 +681,9 @@ function renderKnowledgeBase() {
         <div class="accordion-item" data-id="${itemId}">
           <div class="accordion-header">
             <span class="accordion-title">${item.term}</span>
-            <span class="accordion-icon">▼</span>
+            <span class="accordion-icon">
+                <svg width="20" height="20"><use href="#icon-file-text"></use></svg>
+            </span>
           </div>
           <div class="accordion-content">
             <div class="accordion-body">
@@ -743,10 +718,11 @@ function renderInspectionGuide() {
     let html = '';
 
     INSPECTION_GUIDE_DATA.forEach(guide => {
+        // 絵文字をSVGや空文字に置換（アイコンはCSS/HTML側で定義済みのものを使用するか、シンプルにデザイン）
+        // ここではタイトル横のアイコンは削除し、ミニマルにする
         html += `
             <div class="card" style="margin-bottom: 32px;">
                 <h2 style="display: flex; align-items: center; gap: 8px;">
-                    <span>${guide.icon}</span>
                     <span>${guide.title}</span>
                 </h2>
                 ${guide.description ? `<p style="margin-bottom: 24px;">${guide.description}</p>` : ''}

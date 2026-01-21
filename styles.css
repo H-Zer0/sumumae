@@ -661,22 +661,6 @@ p {
     color: var(--color-text-primary);
 }
 
-/* 絵文字のモノクロ化（ミニマルデザイン） */
-.feature-icon,
-.warning-icon,
-.bottom-nav-icon,
-.card h2 span,
-.accordion-icon {
-    filter: grayscale(100%);
-    opacity: 0.8;
-}
-
-/* 選択中のアイコンは色を戻す */
-.bottom-nav-item.active .bottom-nav-icon {
-    filter: none;
-    opacity: 1;
-}
-
 /* ==========================================
    14. アニメーション
    ========================================== */
@@ -750,35 +734,23 @@ p {
 
 /* ==========================================
    16. レスポンシブ
-   ========================================== */
+   ========================================= */
 @media (max-width: 768px) {
-    :root {
-        --font-heading-l: 22px;
-        --font-heading-m: 18px;
+    .container {
+        padding: 0 20px;
     }
 
-    .container {
-        padding: var(--spacing-md);
+    /* スマホではボトムナビがあるため下の余白を確保 */
+    .screen {
+        padding-bottom: 120px;
     }
 
     .hero-title {
-        font-size: 26px;
-    }
-
-    .features {
-        grid-template-columns: 1fr;
+        font-size: 32px;
     }
 
     .nav-buttons {
         flex-direction: column;
-    }
-
-    .card {
-        padding: var(--spacing-md);
-    }
-
-    .risk-card {
-        padding: var(--spacing-md);
     }
 
     /* ボトムナビを表示 */
@@ -786,9 +758,9 @@ p {
         display: flex;
     }
 
-    /* ボトムナビの高さ分、画面下部に余白を追加（ボタン被り防止） */
+    /* ボトムナビの高さ分、画面下部に余白を追加 */
     .screen {
-        padding-bottom: calc(80px + env(safe-area-inset-bottom) + 64px);
+        padding-bottom: calc(64px + env(safe-area-inset-bottom) + 16px);
     }
 }
 
