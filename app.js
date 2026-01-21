@@ -42,8 +42,18 @@ function initializeApp() {
         navigateToScreen('knowledge');
     });
 
+    // ホームからのガイドボタン（新規）
+    document.getElementById('view-guide-from-top-btn')?.addEventListener('click', () => {
+        navigateToScreen('guide');
+    });
+
     document.getElementById('back-to-result-btn')?.addEventListener('click', () => {
         navigateToScreen('result');
+    });
+
+    // 結果画面からガイドへ
+    document.getElementById('go-to-guide-btn')?.addEventListener('click', () => {
+        navigateToScreen('guide');
     });
 
     // ホームに戻るボタン
@@ -57,6 +67,19 @@ function initializeApp() {
 
     document.getElementById('home-from-knowledge-btn')?.addEventListener('click', () => {
         navigateToScreen('top');
+    });
+
+    document.getElementById('home-from-guide-btn')?.addEventListener('click', () => {
+        navigateToScreen('top');
+    });
+
+    // 相互リンク
+    document.getElementById('go-to-guide-from-knowledge-btn')?.addEventListener('click', () => {
+        navigateToScreen('guide');
+    });
+
+    document.getElementById('go-to-knowledge-from-guide-btn')?.addEventListener('click', () => {
+        navigateToScreen('knowledge');
     });
 
     // ボトムナビゲーション
@@ -75,14 +98,9 @@ function initializeApp() {
     // 診断フローの初期化
     renderQuestion();
 
-    // ナビゲーションボタン
-    document.getElementById('prev-btn')?.addEventListener('click', previousQuestion);
-    document.getElementById('next-btn')?.addEventListener('click', nextQuestion);
-
     // 用語解説の初期化
     renderKnowledgeBase();
     renderInspectionGuide();
-    initKnowledgeTabs();
 
     // 初期画面のボトムナビ状態を更新
     updateBottomNav();
@@ -92,6 +110,9 @@ function initializeApp() {
 // 画面遷移
 // ==========================================
 function navigateToScreen(screenName) {
+    // 画面遷移時に最上部へスクロール（重要修正）
+    window.scrollTo(0, 0);
+
     // すべての画面を非表示
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
@@ -132,8 +153,6 @@ function updateBottomNav() {
 // 診断フロー
 // ==========================================
 function renderQuestion() {
-    const question = DIAGNOSIS_QUESTIONS[state.currentQuestionIndex];
-    if (!question) return;
 
     const container = document.getElementById('question-container');
     const progressFill = document.getElementById('progress-fill');

@@ -4,45 +4,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="初めての一人暮らしでも「やらかさない」物件選びができる診断ツール">
+    <title>Sumumae｜住む。前に。答え合わせ</title>
+    <!-- ファビコン・アイコン設定 -->
+    <link rel="icon" href="./icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="./icon.png">
 
-    <!-- OGP -->
-    <meta property="og:title" content="スムマエ｜住む。前に。答え合わせ">
-    <meta property="og:description" content="初めての一人暮らし向け物件診断">
-    <meta property="og:type" content="website">
-
-    <title>スムマエ｜住む。前に。答え合わせ</title>
-
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap"
         rel="stylesheet">
-
-    <!-- Stylesheet -->
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-
     <!-- ==========================================
        TOP画面
        ========================================== -->
     <div id="top-screen" class="screen active">
         <div class="container">
             <div class="hero">
-                <h1 class="hero-title">スムマエ｜住む。前に。<br>答え合わせ</h1>
+                <h1 class="hero-title">Sumumae</h1>
                 <p class="hero-subtitle">
-                    初めての一人暮らしでも「やらかさない」物件選び。<br>
-                    判断材料を整理して、安心できる住まい探しをサポートします。
+                    住む前に答え合わせ。<br>
+                    初めての１人暮らしでも「やらかさない」<br>
+                    物件選びのサポート。
                 </p>
-                <button id="start-diagnosis-btn" class="btn btn-primary btn-large">
-                    診断を始める
-                </button>
-                <button id="view-knowledge-from-top-btn" class="btn btn-secondary" style="margin-top: 16px;">
-                    📚 用語解説を見る
-                </button>
+                <div style="text-align: center;">
+                    <button id="start-diagnosis-btn" class="btn btn-primary btn-large">
+                        診断を始める
+                    </button>
+                    <div
+                        style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px; align-items: center;">
+                        <button id="view-guide-from-top-btn" class="btn btn-secondary" style="min-width: 200px;">
+                            📖 内見ガイドを見る
+                        </button>
+                        <button id="view-knowledge-from-top-btn" class="btn btn-secondary" style="min-width: 200px;">
+                            📚 用語解説を見る
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="features">
@@ -85,18 +86,16 @@
                 <button id="home-from-diagnosis-btn" class="btn btn-secondary"
                     style="padding: 8px 16px; font-size: 14px;">🏠 ホームに戻る</button>
             </div>
-            <h1 class="text-center">物件診断</h1>
-
-            <!-- プログレスバー -->
             <div class="progress-container">
                 <div class="progress-bar">
                     <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
                 </div>
-                <div id="progress-text" class="progress-text">質問 1 / 6</div>
+                <div id="progress-text" class="progress-text">1 / 10</div>
             </div>
 
-            <!-- 質問コンテナ -->
-            <div id="question-container"></div>
+            <div id="question-container" class="fade-in">
+                <!-- ここに質問がレンダリングされます -->
+            </div>
 
             <!-- ナビゲーションボタン -->
             <div class="nav-buttons">
@@ -111,30 +110,23 @@
        ========================================== -->
     <div id="result-screen" class="screen">
         <div class="container">
-            <div style="text-align: center; margin-bottom: 16px;">
-                <button id="home-from-result-btn" class="btn btn-secondary"
-                    style="padding: 8px 16px; font-size: 14px;">🏠 ホームに戻る</button>
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h1 class="hero-title" style="font-size: 24px;">診断結果</h1>
+                <p id="result-date" class="text-small"></p>
             </div>
-            <h1 class="text-center">診断結果</h1>
-            <p class="text-center text-small" style="margin-bottom: 32px;">
-                あなたの条件から、物件選びのポイントを整理しました。
-            </p>
 
             <!-- 評価メーター -->
             <div class="card">
-                <h2>総合評価</h2>
-                <div id="parent-safety-meter" class="meter-container"></div>
-                <div id="beginner-score-meter" class="meter-container"></div>
+                <div class="meter-container">
+                    <div id="parent-safety-meter"></div>
+                </div>
+                <div class="meter-container">
+                    <div id="beginner-fitness-meter"></div>
+                </div>
             </div>
 
-            <!-- 注意点リスト -->
-            <div class="card">
-                <h2>注意すべきポイント</h2>
-                <p class="text-small" style="margin-bottom: 16px;">
-                    以下の点に注意して物件を選びましょう。
-                </p>
-                <div id="warnings-list"></div>
-            </div>
+            <!-- リスク翻訳（メインコンテンツ） -->
+            <div id="risk-translation-container"></div>
 
             <!-- おすすめ条件 -->
             <div class="card">
@@ -145,25 +137,27 @@
                 <div id="recommendations-list"></div>
             </div>
 
-            <!-- 内見チェックリスト -->
+            <!-- 内見チェックリストへの誘導 -->
             <div class="card">
                 <h2>📋 内見時のチェックリスト</h2>
                 <p class="text-small" style="margin-bottom: 16px;">
-                    内見の際は、以下のポイントを必ず確認しましょう。
+                    内見の際は、ガイドページのチェックリストを活用しましょう。
                 </p>
-                <div id="inspection-checklist"></div>
+                <button id="go-to-guide-btn" class="btn btn-secondary btn-block">
+                    内見ガイド・チェックリストへ
+                </button>
             </div>
 
             <!-- アクションボタン -->
             <div class="nav-buttons">
-                <button id="view-knowledge-btn" class="btn btn-secondary">用語解説を見る</button>
                 <button id="restart-btn" class="btn btn-primary">診断をやり直す</button>
+                <button id="home-from-result-btn" class="btn btn-secondary">ホームに戻る</button>
             </div>
         </div>
     </div>
 
     <!-- ==========================================
-       用語解説・ガイド画面
+       用語解説画面（独立）
        ========================================== -->
     <div id="knowledge-screen" class="screen">
         <div class="container">
@@ -171,83 +165,52 @@
                 <button id="home-from-knowledge-btn" class="btn btn-secondary"
                     style="padding: 8px 16px; font-size: 14px;">🏠 ホームに戻る</button>
             </div>
-            <h1 class="text-center">知恵袋 & ガイド</h1>
-            <p class="text-center text-small" style="margin-bottom: 24px;">
-                専門用語の解説や、内見時に役立つ完全ガイドライン。
+            <h1 class="text-center">用語解説</h1>
+            <p class="text-center text-small" style="margin-bottom: 32px;">
+                物件選びで知っておきたい用語を解説します。
             </p>
 
-            <!-- タブナビゲーション -->
-            <div class="nav-buttons" style="margin-bottom: 32px; gap: 12px;">
-                <button id="tab-knowledge" class="btn btn-primary btn-block">用語解説</button>
-                <button id="tab-guide" class="btn btn-secondary btn-block">内見ガイド</button>
-            </div>
-
-            <div id="knowledge-section">
+            <div id="knowledge-list">
                 <div id="knowledge-accordion"></div>
             </div>
 
-            <div id="guide-section" class="hidden">
-                <div id="inspection-guide-list"></div>
+            <div class="text-center mt-lg">
+                <button id="go-to-guide-from-knowledge-btn" class="btn btn-secondary btn-large">
+                    📖 内見ガイドを見る
+                </button>
             </div>
-
-            <!-- ボトムスペーサー -->
-            <div style="height: 48px;"></div>
         </div>
     </div>
 
-    <div class="text-center mt-lg">
-        <button id="back-to-result-btn" class="btn btn-primary">結果に戻る</button>
-    </div>
-    </div>
+    <!-- ==========================================
+       内見ガイド画面（独立）
+       ========================================== -->
+    <div id="guide-screen" class="screen">
+        <div class="container">
+            <div style="text-align: center; margin-bottom: 16px;">
+                <button id="home-from-guide-btn" class="btn btn-secondary"
+                    style="padding: 8px 16px; font-size: 14px;">🏠 ホームに戻る</button>
+            </div>
+            <h1 class="text-center">内見完全ガイド</h1>
+            <p class="text-center text-small" style="margin-bottom: 32px;">
+                内見の準備からチェックポイントまで。<br>
+                失敗しないための完全マニュアル。
+            </p>
+
+            <div id="inspection-guide-list">
+                <!-- ここに内見ガイドが追加されます -->
+            </div>
+
+            <div class="text-center mt-lg">
+                <button id="go-to-knowledge-from-guide-btn" class="btn btn-secondary btn-large">
+                    📚 用語解説を見る
+                </button>
+            </div>
+        </div>
     </div>
 
-    <!-- Scripts -->
     <script src="data.js"></script>
     <script src="app.js"></script>
-
-    <!-- 内見チェックリストのレンダリング -->
-    <script>
-        // 内見チェックリストを結果画面に表示
-        document.addEventListener('DOMContentLoaded', () => {
-            const checklistContainer = document.getElementById('inspection-checklist');
-            if (checklistContainer && typeof INSPECTION_CHECKLIST !== 'undefined') {
-                const groupedByCategory = {};
-
-                INSPECTION_CHECKLIST.forEach(item => {
-                    if (!groupedByCategory[item.category]) {
-                        groupedByCategory[item.category] = [];
-                    }
-                    groupedByCategory[item.category].push(item);
-                });
-
-                let html = '';
-                Object.keys(groupedByCategory).forEach(category => {
-                    html += `<h3 style="margin-top: 24px; margin-bottom: 12px; font-size: 16px;">${category}</h3>`;
-                    html += '<div style="display: flex; flex-direction: column; gap: 12px;">';
-
-                    groupedByCategory[category].forEach(item => {
-                        const importanceColor = {
-                            'critical': 'var(--color-danger)',
-                            'high': 'var(--color-warning)',
-                            'medium': 'var(--color-primary)',
-                            'low': 'var(--color-text-light)'
-                        }[item.importance];
-
-                        html += `
-              <div style="padding: 12px; border-left: 3px solid ${importanceColor}; background: var(--color-bg); border-radius: 4px;">
-                <div style="font-weight: 500; margin-bottom: 4px;">✓ ${item.item}</div>
-                <div style="font-size: 14px; color: var(--color-text-light);">${item.method}</div>
-              </div>
-            `;
-                    });
-
-                    html += '</div>';
-                });
-
-                checklistContainer.innerHTML = html;
-            }
-        });
-    </script>
 
     <!-- ボトムナビゲーション（スマホ用） -->
     <nav id="bottom-nav" class="bottom-nav">
@@ -259,9 +222,13 @@
             <span class="bottom-nav-icon">📝</span>
             <span class="bottom-nav-label">診断</span>
         </button>
+        <button class="bottom-nav-item" data-screen="guide">
+            <span class="bottom-nav-icon">📖</span>
+            <span class="bottom-nav-label">ガイド</span>
+        </button>
         <button class="bottom-nav-item" data-screen="knowledge">
             <span class="bottom-nav-icon">📚</span>
-            <span class="bottom-nav-label">用語解説</span>
+            <span class="bottom-nav-label">用語</span>
         </button>
     </nav>
 
