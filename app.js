@@ -596,110 +596,118 @@ function generateRecommendations(answers) {
 // ==========================================
 // 結果表示
 // ==========================================
+// ==========================================
+// 結果表示
+// ==========================================
 function renderResult() {
     if (!state.result) return;
 
-    // まだ診断結果がない、またはresult-containerがない場合は何もしない
-    const resultContainer = document.getElementById('result-container');
-    if (!resultContainer) return;
+    const container = document.getElementById('result-container');
+    if (!container) return;
 
     const { parentSafetyScore, beginnerScore, warnings, recommendations } = state.result;
 
-    // HTMLを生成
-    let html = '';
-
-    // 1. 評価スコア
-    html += `
+    // HTML構築
+    let html = `
+        <!-- 評価メーター -->
         <div class="card">
             <h2>総合評価</h2>
-            <div id="parent-safety-meter" class="meter-container">
-                <div class="meter-label">
-                    <span class="meter-title">親安心度</span>
-                    <span class="meter-score numeric">${parentSafetyScore}<span style="font-size: 16px; font-family: var(--font-jp);">/100</span></span>
-                </div>
-                <div class="meter-bar">
-                    <div class="meter-fill" style="width: ${parentSafetyScore}%"></div>
-                </div>
-            </div>
-            <div id="beginner-score-meter" class="meter-container" style="margin-top: 24px;">
-                <div class="meter-label">
-                    <span class="meter-title">新人ひとり暮らし力</span>
-                    <span class="meter-score numeric">${beginnerScore}<span style="font-size: 16px; font-family: var(--font-jp);">/100</span></span>
-                </div>
-                <div class="meter-bar">
-                    <div class="meter-fill" style="width: ${beginnerScore}%"></div>
-                </div>
-            </div>
+            <div id="parent-safety-meter" class="meter-container"></div>
+            <div id="beginner-score-meter" class="meter-container"></div>
         </div>
     `;
 
-    // 2. 注意点リスト
+    // 注意点リスト
     html += `
         <div class="card">
             <h2>注意すべきポイント</h2>
             <p class="text-small" style="margin-bottom: 16px;">
                 以下の点に注意して物件を選びましょう。
             </p>
-            <div id="warnings-list">
-                ${warnings.length === 0 ? '<p class="text-center">特に大きな懸念点はありません。</p>' : warnings.map(warning => `
-                    <div class="warning-item ${warning.severity}">
-                        <div class="warning-icon">${getSeverityIcon(warning.severity)}</div>
-                        <div class="warning-content">
-                            <div class="warning-title">${warning.title}</div>
-                            <div class="warning-text">${warning.risk}</div>
-                            <div class="warning-text"><strong>親の懸念:</strong> ${warning.parentConcern}</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
     `;
 
-    // 3. おすすめ条件
+    if (warnings.length === 0) {
+        html += '<p class="text-center">特に大きな注意点は見つかりませんでした。</p>';
+    } else {
+        html += warnings.map(warning => `
+            <div class="warning-item ${warning.severity}" style="border-left: 3px solid ${getSeverityColor(warning.severity)}; padding-left: 12px; margin-bottom: 12px; background: var(--color-bg-page);">
+                <div style="display: flex; align-items: start; gap: 8px;">
+                    <div class="warning-icon">${getSeverityIcon(warning.severity)}</div>
+                    <div>
+                        <div class="warning-title" style="font-weight: bold;">${warning.title}</div>
+                        <div class="text-small" style="color: var(--color-text-secondary); margin-top: 4px;">${warning.risk}</div>
+                        <div class="text-small" style="color: var(--color-text-tertiary); margin-top: 4px;"><strong>親の視点:</strong> ${warning.parentConcern}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    html += '</div>';
+
+    // おすすめ条件
     html += `
         <div class="card">
             <h2>おすすめの条件</h2>
             <p class="text-small" style="margin-bottom: 16px;">
                 あなたに向いている物件条件です。
             </p>
-            <div id="recommendations-list">
-                ${recommendations.length === 0 ? '<p class="text-center">現在の条件で問題ありません。</p>' : recommendations.map(rec => `
-                    <div class="card" style="border: 1px solid var(--color-border); box-shadow: none; margin-bottom: 16px;">
-                        <h3 style="margin-bottom: 8px; font-size: 16px;">✓ ${rec.title}</h3>
-                        <p class="text-small">${rec.reason}</p>
-                    </div>
-                `).join('')}
+    `;
+
+    if (recommendations.length === 0) {
+        html += '<p class="text-center">現在の条件で問題ありません。</p>';
+    } else {
+        html += recommendations.map(rec => `
+            <div style="margin-bottom: 16px; padding: 12px; background: var(--color-bg-page); border-radius: 8px;">
+                <h3 style="font-size: 16px; margin-bottom: 4px;">
+                    <svg width="16" height="16" style="vertical-align: middle; color: var(--color-accent-a); margin-right: 4px;"><use href="#icon-check-square"></use></svg>
+                    ${rec.title}
+                </h3>
+                <p class="text-small">${rec.reason}</p>
             </div>
-        </div>
-    `;
+        `).join('');
+    }
+    html += '</div>';
 
-    // 4. (オプション) 内見チェックリストのリンクなど
-    html += `
-        <div class="card">
-            <h2>次のステップ</h2>
-            <p class="text-small" style="margin-bottom: 16px;">
-                内見に行く前に、ガイドを確認して準備を整えましょう。
-            </p>
-            <button id="go-to-guide-btn" class="btn btn-secondary btn-block">内見ガイドを見る</button>
-        </div>
-    `;
+    // 内見チェックリストへの誘導などが必要ならここに追加
 
-    resultContainer.innerHTML = html;
+    container.innerHTML = html;
 
-    // 動的に生成したボタンにイベントリスナーを追加
-    document.getElementById('go-to-guide-btn')?.addEventListener('click', () => {
-        navigateToScreen('guide');
-    });
+    // メーター描画（HTML挿入後に実行）
+    renderMeter('parent-safety-meter', parentSafetyScore, '親安心度');
+    renderMeter('beginner-score-meter', beginnerScore, '初心者適正度');
 }
 
-// 補助関数は不要になったため削除（renderMeterなどは直接埋め込み）または残してもよいが、今回はシンプルに上記で完結させる
+function getSeverityColor(severity) {
+    const colors = {
+        critical: 'var(--color-accent-b)',
+        high: 'var(--color-accent-b)',
+        medium: 'var(--color-accent-a)',
+        low: 'var(--color-text-tertiary)'
+    };
+    return colors[severity] || colors.medium;
+}
+
+function renderMeter(containerId, score, label) {
+    const container = document.getElementById(containerId);
+    if (!container) return; // 親要素がなくてもエラーにしない
+
+    container.innerHTML = `
+    <div class="meter-label">
+      <span class="meter-title">${label}</span>
+      <span class="meter-score numeric">${score}<span style="font-size: 16px; font-family: var(--font-jp);">/100</span></span>
+    </div>
+    <div class="meter-bar">
+      <div class="meter-fill" style="width: ${score}%"></div>
+    </div>
+  `;
+}
 
 function getSeverityIcon(severity) {
     // 絵文字をSVGアイコンに変更（ID参照）
     const icons = {
-        critical: '<svg width="20" height="20" style="color: var(--color-text-primary)"><use href="#icon-alert-triangle"></use></svg>',
-        high: '<svg width="20" height="20" style="color: var(--color-text-primary)"><use href="#icon-alert-triangle"></use></svg>',
-        medium: '<svg width="20" height="20" style="color: var(--color-text-secondary)"><use href="#icon-shield"></use></svg>',
+        critical: '<svg width="20" height="20" style="color: var(--color-accent-b)"><use href="#icon-alert-triangle"></use></svg>',
+        high: '<svg width="20" height="20" style="color: var(--color-accent-b)"><use href="#icon-alert-triangle"></use></svg>',
+        medium: '<svg width="20" height="20" style="color: var(--color-accent-a)"><use href="#icon-shield"></use></svg>',
         low: '<svg width="20" height="20" style="color: var(--color-text-tertiary)"><use href="#icon-check-square"></use></svg>'
     };
     return icons[severity] || icons.medium;
@@ -715,7 +723,9 @@ function renderKnowledgeBase() {
     let html = '';
 
     Object.keys(KNOWLEDGE_BASE).forEach(category => {
-        html += `<h2 style="margin-top: 32px; margin-bottom: 16px;">${category}</h2>`;
+        // カテゴリタイトルは除去してフラットにするか、デザインを変える
+        // ここではカテゴリごとにまとまりを作る
+        html += `<h3 style="margin-top: 24px; margin-bottom: 12px; font-size: 14px; color: var(--color-text-secondary);">${category}</h3>`;
 
         KNOWLEDGE_BASE[category].forEach((item, index) => {
             const itemId = `${category}-${index}`;
@@ -739,19 +749,11 @@ function renderKnowledgeBase() {
     });
 
     container.innerHTML = html;
-
-    // アコーディオンのイベントリスナー
-    const headers = container.querySelectorAll('.accordion-header');
-    headers.forEach(header => {
-        header.addEventListener('click', () => {
-            const item = header.parentElement;
-            item.classList.toggle('open');
-        });
-    });
+    setupAccordion(container);
 }
 
 // ==========================================
-// 内見完全ガイドレンダリング
+// 内見完全ガイドレンダリング（デザインを用語解説に統一）
 // ==========================================
 function renderInspectionGuide() {
     const container = document.getElementById('inspection-guide-list');
@@ -759,22 +761,47 @@ function renderInspectionGuide() {
 
     let html = '';
 
-    INSPECTION_GUIDE_DATA.forEach(guide => {
-        // 絵文字をSVGや空文字に置換（アイコンはCSS/HTML側で定義済みのものを使用するか、シンプルにデザイン）
-        // ここではタイトル横のアイコンは削除し、ミニマルにする
+    INSPECTION_GUIDE_DATA.forEach((guide, index) => {
+        const guideId = `guide-${index}`;
+        // アコーディオン形式に変更
         html += `
-            <div class="card" style="margin-bottom: 32px;">
-                <h2 style="display: flex; align-items: center; gap: 8px;">
-                    <span>${guide.title}</span>
-                </h2>
-                ${guide.description ? `<p style="margin-bottom: 24px;">${guide.description}</p>` : ''}
-                
-                ${guide.isChecklist ? renderChecklistItems(guide.items) : renderGuideSections(guide.sections)}
+            <div class="accordion-item" data-id="${guideId}">
+                <div class="accordion-header">
+                    <span class="accordion-title" style="font-weight: bold;">${guide.title}</span>
+                    <span class="accordion-icon">
+                         <svg width="20" height="20"><use href="#icon-map"></use></svg>
+                    </span>
+                </div>
+                <div class="accordion-content" ${guide.title.includes('チェック') ? 'style="max-height: none;"' : ''}> <!-- チェックリストなどは最初から開くか検討だが、統一感のため閉じる -->
+                    <div class="accordion-body">
+                        ${guide.description ? `<p style="margin-bottom: 24px; color: var(--color-text-secondary);">${guide.description}</p>` : ''}
+                        
+                        ${guide.isChecklist ? renderChecklistItems(guide.items) : renderGuideSections(guide.sections)}
+                    </div>
+                </div>
             </div>
         `;
     });
 
     container.innerHTML = html;
+    setupAccordion(container);
+}
+
+// アコーディオンのセットアップ関数（共通化）
+function setupAccordion(container) {
+    const headers = container.querySelectorAll('.accordion-header');
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const item = header.parentElement;
+
+            // 他を閉じる（オプション）
+            // container.querySelectorAll('.accordion-item').forEach(i => {
+            //    if (i !== item) i.classList.remove('open');
+            // });
+
+            item.classList.toggle('open');
+        });
+    });
 }
 
 function renderGuideSections(sections) {
@@ -782,7 +809,7 @@ function renderGuideSections(sections) {
 
     return sections.map(section => `
         <div class="guide-section" style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--color-divider);">
-            <h3 style="margin-bottom: 16px;">${section.subtitle}</h3>
+            <h3 style="margin-bottom: 16px; color: var(--color-accent-a);">${section.subtitle}</h3>
             ${section.description ? `<p style="margin-bottom: 16px;">${section.description}</p>` : ''}
             
             ${renderGuideContent(section)}
@@ -798,8 +825,8 @@ function renderGuideContent(section) {
             // マークダウン的な太字記法 (**text**) をHTMLに変換
             const formattedItem = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             return `
-                    <li class="warning-item" style="border-left: none; padding-left: 0;">
-                        <span class="warning-icon" style="color: var(--color-text-secondary);">✓</span>
+                    <li class="warning-item" style="border-left-color: var(--color-accent-a);">
+                        <span class="warning-icon">✓</span>
                         <div class="warning-content">
                             <p class="warning-text" style="color: var(--color-text-primary); font-size: 15px;">${formattedItem}</p>
                         </div>
@@ -814,7 +841,7 @@ function renderGuideContent(section) {
             const formattedItem = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
             return `
                     <li style="margin-bottom: 12px; padding-left: 1.5em; position: relative;">
-                        <span style="position: absolute; left: 0; color: var(--color-text-secondary);">•</span>
+                        <span style="position: absolute; left: 0; color: var(--color-accent-a);">•</span>
                         ${formattedItem}
                     </li>
                 `}).join('')}
