@@ -682,7 +682,65 @@ p {
 }
 
 /* ==========================================
-   15. ボトムナビゲーション（Mobile Only）
+   15. ヘッダーナビゲーション（PC用）
+   ========================================== */
+.site-header {
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-sm) 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: var(--font-weight-bold);
+    font-size: 1.25rem;
+    color: var(--color-text-primary);
+}
+
+.header-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+}
+
+.desktop-nav {
+    display: flex;
+    gap: var(--spacing-lg);
+}
+
+.nav-link {
+    text-decoration: none;
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.nav-link:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-page);
+}
+
+.nav-link.active {
+    color: var(--color-text-primary);
+    background: var(--color-bg-page);
+    font-weight: var(--font-weight-bold);
+}
+
+/* ==========================================
+   16. ボトムナビゲーション（Mobile Only）
    ========================================== */
 .bottom-nav {
     display: none;
@@ -739,6 +797,17 @@ p {
 @media (max-width: 768px) {
     .container {
         padding: 0 20px;
+    }
+
+    /* スマホではヘッダーナビを非表示 */
+    .desktop-nav {
+        display: none;
+    }
+
+    /* ヘッダー自体はロゴ表示のために残すが、余白等を調整しても良い */
+    .site-header {
+        position: relative;
+        /* 固定ヘッダーが邪魔なら解除、今回はそのまま */
     }
 
     /* スマホではボトムナビがあるため下の余白を確保 */

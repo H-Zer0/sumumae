@@ -27,47 +27,44 @@ function initializeApp() {
     document.getElementById('start-diagnosis-btn')?.addEventListener('click', () => {
         navigateToScreen('diagnosis');
     });
+    // 診断開始ボタン
+    const startBtn = document.getElementById('start-diagnosis-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            state.answers = {};
+            state.currentQuestionIndex = 0;
+            navigateToScreen('diagnosis');
+        });
+    }
 
-    document.getElementById('restart-btn')?.addEventListener('click', () => {
-        resetDiagnosis();
-        navigateToScreen('diagnosis');
+    // 診断画面のナビゲーション
+    document.getElementById('prev-btn')?.addEventListener('click', previousQuestion); // Assuming previousQuestion is defined elsewhere
+    document.getElementById('next-btn')?.addEventListener('click', nextQuestion); // Assuming nextQuestion is defined elsewhere
+
+    // ホームに戻るボタン（各画面）
+    ['diagnosis', 'result', 'knowledge', 'guide'].forEach(screen => {
+        const btnId = `home-from-${screen}-btn`;
+        document.getElementById(btnId)?.addEventListener('click', () => navigateToScreen('top'));
     });
-
-    document.getElementById('view-knowledge-btn')?.addEventListener('click', () => {
-        navigateToScreen('knowledge');
-    });
-
-    // ホームからの用語解説ボタン
-    document.getElementById('view-knowledge-from-top-btn')?.addEventListener('click', () => {
-        navigateToScreen('knowledge');
-    });
-
-    document.getElementById('back-to-result-btn')?.addEventListener('click', () => {
-        navigateToScreen('result');
-    });
-
-    // ホームに戻るボタン
-    document.getElementById('home-from-diagnosis-btn')?.addEventListener('click', () => navigateToScreen('top'));
-    document.getElementById('home-from-result-btn')?.addEventListener('click', () => navigateToScreen('top'));
-    document.getElementById('home-from-knowledge-btn')?.addEventListener('click', () => navigateToScreen('top'));
-    document.getElementById('home-from-guide-btn')?.addEventListener('click', () => navigateToScreen('top'));
 
     // ボトムナビゲーション
     document.querySelectorAll('.bottom-nav-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const screen = item.dataset.screen;
-            // 診断画面への遷移時、リセットするかどうかの判断はUXによるが、
-            // ユーザーは「続き」を見たい場合も多いのでそのまま遷移
-            navigateToScreen(screen);
+        item.addEventListener('click', (e) => {
+            // クリックされたボタンのdata-screenを取得（アイコンクリック時も親を参照）
+            const target = e.currentTarget;
+            const screen = target.dataset.screen;
+            if (screen) navigateToScreen(screen);
         });
     });
 
-    // 診断フローの初期化
-    renderQuestion();
-
-    // ナビゲーションボタン
-    document.getElementById('prev-btn')?.addEventListener('click', previousQuestion);
-    document.getElementById('next-btn')?.addEventListener('click', nextQuestion);
+    // ヘッダーナビゲーション (PC用)
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const screen = link.dataset.screen;
+            if (screen) navigateToScreen(screen);
+        });
+    });
 
     // 用語解説・ガイドの初期化
     renderKnowledgeBase();
@@ -101,6 +98,7 @@ function navigateToScreen(screenName) {
 
         // ボトムナビの状態を更新
         updateBottomNav();
+        updateHeaderNav();
 
         // 【重要】スクロール位置を最上部にリセット（スマホ対策）
         window.scrollTo(0, 0);
