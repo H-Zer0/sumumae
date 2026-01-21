@@ -599,64 +599,107 @@ function generateRecommendations(answers) {
 function renderResult() {
     if (!state.result) return;
 
+    // まだ診断結果がない、またはresult-containerがない場合は何もしない
+    const resultContainer = document.getElementById('result-container');
+    if (!resultContainer) return;
+
     const { parentSafetyScore, beginnerScore, warnings, recommendations } = state.result;
 
-    // スコア表示
-    renderMeter('parent-safety-meter', parentSafetyScore, '親安心度');
-    renderMeter('beginner-score-meter', beginnerScore, '初心者適正度');
+    // HTMLを生成
+    let html = '';
 
-    // 注意点リスト
-    const warningsContainer = document.getElementById('warnings-list');
-    if (warnings.length === 0) {
-        warningsContainer.innerHTML = '<p class="text-center">特に大きな注意点は見つかりませんでした。</p>';
-    } else {
-        warningsContainer.innerHTML = warnings.map(warning => `
-      <div class="warning-item ${warning.severity}">
-        <div class="warning-icon">${getSeverityIcon(warning.severity)}</div>
-        <div class="warning-content">
-          <div class="warning-title">${warning.title}</div>
-          <div class="warning-text"><strong>生活リスク:</strong> ${warning.risk}</div>
-          <div class="warning-text"><strong>親の懸念:</strong> ${warning.parentConcern}</div>
+    // 1. 評価スコア
+    html += `
+        <div class="card">
+            <h2>総合評価</h2>
+            <div id="parent-safety-meter" class="meter-container">
+                <div class="meter-label">
+                    <span class="meter-title">親安心度</span>
+                    <span class="meter-score numeric">${parentSafetyScore}<span style="font-size: 16px; font-family: var(--font-jp);">/100</span></span>
+                </div>
+                <div class="meter-bar">
+                    <div class="meter-fill" style="width: ${parentSafetyScore}%"></div>
+                </div>
+            </div>
+            <div id="beginner-score-meter" class="meter-container" style="margin-top: 24px;">
+                <div class="meter-label">
+                    <span class="meter-title">新人ひとり暮らし力</span>
+                    <span class="meter-score numeric">${beginnerScore}<span style="font-size: 16px; font-family: var(--font-jp);">/100</span></span>
+                </div>
+                <div class="meter-bar">
+                    <div class="meter-fill" style="width: ${beginnerScore}%"></div>
+                </div>
+            </div>
         </div>
-      </div>
-    `).join('');
-    }
+    `;
 
-    // おすすめ条件
-    const recommendationsContainer = document.getElementById('recommendations-list');
-    if (recommendations.length === 0) {
-        recommendationsContainer.innerHTML = '<p class="text-center">現在の条件で問題ありません。</p>';
-    } else {
-        recommendationsContainer.innerHTML = recommendations.map(rec => `
-      <div class="card">
-        <h3 style="margin-bottom: 8px;">✓ ${rec.title}</h3>
-        <p class="text-small">${rec.reason}</p>
-      </div>
-    `).join('');
-    }
+    // 2. 注意点リスト
+    html += `
+        <div class="card">
+            <h2>注意すべきポイント</h2>
+            <p class="text-small" style="margin-bottom: 16px;">
+                以下の点に注意して物件を選びましょう。
+            </p>
+            <div id="warnings-list">
+                ${warnings.length === 0 ? '<p class="text-center">特に大きな懸念点はありません。</p>' : warnings.map(warning => `
+                    <div class="warning-item ${warning.severity}">
+                        <div class="warning-icon">${getSeverityIcon(warning.severity)}</div>
+                        <div class="warning-content">
+                            <div class="warning-title">${warning.title}</div>
+                            <div class="warning-text">${warning.risk}</div>
+                            <div class="warning-text"><strong>親の懸念:</strong> ${warning.parentConcern}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    // 3. おすすめ条件
+    html += `
+        <div class="card">
+            <h2>おすすめの条件</h2>
+            <p class="text-small" style="margin-bottom: 16px;">
+                あなたに向いている物件条件です。
+            </p>
+            <div id="recommendations-list">
+                ${recommendations.length === 0 ? '<p class="text-center">現在の条件で問題ありません。</p>' : recommendations.map(rec => `
+                    <div class="card" style="border: 1px solid var(--color-border); box-shadow: none; margin-bottom: 16px;">
+                        <h3 style="margin-bottom: 8px; font-size: 16px;">✓ ${rec.title}</h3>
+                        <p class="text-small">${rec.reason}</p>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    // 4. (オプション) 内見チェックリストのリンクなど
+    html += `
+        <div class="card">
+            <h2>次のステップ</h2>
+            <p class="text-small" style="margin-bottom: 16px;">
+                内見に行く前に、ガイドを確認して準備を整えましょう。
+            </p>
+            <button id="go-to-guide-btn" class="btn btn-secondary btn-block">内見ガイドを見る</button>
+        </div>
+    `;
+
+    resultContainer.innerHTML = html;
+
+    // 動的に生成したボタンにイベントリスナーを追加
+    document.getElementById('go-to-guide-btn')?.addEventListener('click', () => {
+        navigateToScreen('guide');
+    });
 }
 
-function renderMeter(containerId, score, label) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    container.innerHTML = `
-    <div class="meter-label">
-      <span class="meter-title">${label}</span>
-      <span class="meter-score numeric">${score}<span style="font-size: 16px; font-family: var(--font-jp);">/100</span></span>
-    </div>
-    <div class="meter-bar">
-      <div class="meter-fill" style="width: ${score}%"></div>
-    </div>
-  `;
-}
+// 補助関数は不要になったため削除（renderMeterなどは直接埋め込み）または残してもよいが、今回はシンプルに上記で完結させる
 
 function getSeverityIcon(severity) {
     // 絵文字をSVGアイコンに変更（ID参照）
     const icons = {
-        critical: '<svg width="20" height="20" style="color: var(--color-accent-b)"><use href="#icon-alert-triangle"></use></svg>',
-        high: '<svg width="20" height="20" style="color: var(--color-accent-b)"><use href="#icon-alert-triangle"></use></svg>',
-        medium: '<svg width="20" height="20" style="color: var(--color-accent-a)"><use href="#icon-shield"></use></svg>',
+        critical: '<svg width="20" height="20" style="color: var(--color-text-primary)"><use href="#icon-alert-triangle"></use></svg>',
+        high: '<svg width="20" height="20" style="color: var(--color-text-primary)"><use href="#icon-alert-triangle"></use></svg>',
+        medium: '<svg width="20" height="20" style="color: var(--color-text-secondary)"><use href="#icon-shield"></use></svg>',
         low: '<svg width="20" height="20" style="color: var(--color-text-tertiary)"><use href="#icon-check-square"></use></svg>'
     };
     return icons[severity] || icons.medium;
@@ -739,7 +782,7 @@ function renderGuideSections(sections) {
 
     return sections.map(section => `
         <div class="guide-section" style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--color-divider);">
-            <h3 style="margin-bottom: 16px; color: var(--color-accent-a);">${section.subtitle}</h3>
+            <h3 style="margin-bottom: 16px;">${section.subtitle}</h3>
             ${section.description ? `<p style="margin-bottom: 16px;">${section.description}</p>` : ''}
             
             ${renderGuideContent(section)}
@@ -755,8 +798,8 @@ function renderGuideContent(section) {
             // マークダウン的な太字記法 (**text**) をHTMLに変換
             const formattedItem = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             return `
-                    <li class="warning-item" style="border-left-color: var(--color-accent-a);">
-                        <span class="warning-icon">✓</span>
+                    <li class="warning-item" style="border-left: none; padding-left: 0;">
+                        <span class="warning-icon" style="color: var(--color-text-secondary);">✓</span>
                         <div class="warning-content">
                             <p class="warning-text" style="color: var(--color-text-primary); font-size: 15px;">${formattedItem}</p>
                         </div>
@@ -771,7 +814,7 @@ function renderGuideContent(section) {
             const formattedItem = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
             return `
                     <li style="margin-bottom: 12px; padding-left: 1.5em; position: relative;">
-                        <span style="position: absolute; left: 0; color: var(--color-accent-a);">•</span>
+                        <span style="position: absolute; left: 0; color: var(--color-text-secondary);">•</span>
                         ${formattedItem}
                     </li>
                 `}).join('')}
