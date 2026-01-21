@@ -667,6 +667,81 @@ function getSeverityIcon(severity) {
 }
 
 // ==========================================
+// 内見チェックリストのレンダリング
+// ==========================================
+function renderInspectionChecklist() {
+    const container = document.getElementById('inspection-checklist');
+    if (!container) return;
+
+    // カテゴリごとにグループ化
+    const groupedList = INSPECTION_CHECKLIST.reduce((acc, item) => {
+        if (!acc[item.category]) {
+            acc[item.category] = [];
+        }
+        acc[item.category].push(item);
+        return acc;
+    }, {});
+
+    let html = '';
+
+    // カテゴリの表示順序を定義（data.jsの定義順になるように制御）
+    const categoryOrder = [
+        '室内・日当たり', '室内・収納', '室内・水回り', '室内・設備', '室内・状態',
+        '室内・防音', '室内・構造', '室内・通信', '室内・玄関', '室内・環境',
+        '共用部', '周辺環境'
+    ];
+
+    // 実際に存在するカテゴリだけを抽出して順序付け
+    const sortedCategories = Object.keys(groupedList).sort((a, b) => {
+        const indexA = categoryOrder.indexOf(a);
+        const indexB = categoryOrder.indexOf(b);
+        // 定義されていないカテゴリは後ろに
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+    });
+
+    sortedCategories.forEach(category => {
+        html += `<h3 class="checklist-category-title">${category}</h3>`;
+        html += '<ul class="checklist">';
+
+        groupedList[category].forEach(item => {
+            const importanceClass = item.importance === 'critical' ? 'critical' :
+                item.importance === 'high' ? 'high' : 'medium';
+
+            const badgeLabel = item.importance === 'critical' ? '絶対確認' :
+                item.importance === 'high' ? '重要' : '確認';
+
+            html += `
+                <li class="checklist-item ${importanceClass}">
+                    <div class="checklist-header">
+                        <span class="checklist-badge ${importanceClass}">${badgeLabel}</span>
+                        <span class="checklist-title">${item.item}</span>
+                    </div>
+                    <div class="checklist-content">
+                        <p class="checklist-method">${item.method}</p>
+                        ${item.details ? `<p class="checklist-details">💡 ${item.details}</p>` : ''}
+                    </div>
+                </li>
+            `;
+        });
+
+        html += '</ul>';
+    });
+
+    // 印刷ボタンの追加
+    html += `
+        <div class="text-center mt-lg">
+            <button onclick="window.print()" class="btn btn-secondary btn-block">
+                🖨 このリストを印刷する
+            </button>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+// ==========================================
 // 用語解説
 // ==========================================
 function renderKnowledgeBase() {
