@@ -292,14 +292,9 @@ function attachQuestionEventListeners(question) {
         const checkboxOptions = document.querySelectorAll('.radio-option[data-type="checkbox"]');
         checkboxOptions.forEach(option => {
             option.addEventListener('click', (e) => {
-                // ラベルクリック時のデフォルト動作（チェックボックスの反転）を妨げないようにする
-                // ただし、カスタムデザインの場合は自分で制御が必要なこともある
-                // ここでは、inputへのクリックが伝播してくるのを考慮
-                if (e.target.tagName === 'INPUT') {
-                    e.stopPropagation(); // input自体のクリックイベントはここで止めて、以下のロジックで処理
-                } else {
-                    // e.preventDefault(); // ラベルのデフォルト動作を止めて自分で制御する場合
-                }
+                // デフォルトの動作を無効化して、全て手動で制御する
+                // これにより、ラベルテキストクリック時とチェックボックスクリック時の挙動を統一できる
+                e.preventDefault();
 
                 const value = option.dataset.value;
                 let currentAnswers = state.answers[question.id] || [];
