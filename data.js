@@ -428,6 +428,29 @@ const DIAGNOSIS_QUESTIONS = [
         ]
     },
     {
+        id: 'cookingFrequency',
+        question: '自炊はどれくらいの頻度でする予定ですか？（任意）',
+        type: 'select',
+        options: [
+            { value: 'daily', label: '週3回以上（本格的に料理したい）' },
+            { value: 'sometimes', label: '週1〜2回（簡単なものだけ）' },
+            { value: 'rarely', label: 'ほぼしない（コンビニ・外食派）' }
+        ],
+        optional: true
+    },
+    {
+        id: 'constitution',
+        question: '体質や生活で特に気になることはありますか？（任意）',
+        type: 'select',
+        options: [
+            { value: 'cold', label: 'ひどい寒がり・冷え性' },
+            { value: 'heat', label: '暑がり・汗かき' },
+            { value: 'bugs', label: '虫がとにかく苦手' },
+            { value: 'none', label: '特になし' }
+        ],
+        optional: true
+    },
+    {
         id: 'propertyConditions',
         question: '検討中の物件条件を教えてください（任意）',
         type: 'multiInput',
@@ -615,7 +638,7 @@ const INSPECTION_GUIDE_DATA = [
         sections: [
             {
                 subtitle: "内見の時間帯｜昼と夜、どちらが良い？",
-                description: "内見は時間帯によって見るべきポイントが変わります。可能であれば、**昼と夜の2回内見するのが理想**です。",
+                description: "内見は時間帯によって見るべきポイントが変わります。可能であれば、昼と夜の2回内見するのが理想です。",
                 content: [
                     {
                         heading: "【昼の内見】おすすめ時間：10:00〜15:00",
@@ -631,7 +654,7 @@ const INSPECTION_GUIDE_DATA = [
                 type: "comparison"
             },
             {
-                subtitle: "【平日 vs 週末】どちらが良い？",
+                subtitle: "【平日 と 週末】どちらが良い？",
                 items: [
                     "**平日の内見**：通勤・通学時の交通状況、日常的な騒音レベルを確認できる",
                     "**週末の内見**：周辺環境（公園や商店街）の混雑具合、住民の在宅パターンを確認できる",

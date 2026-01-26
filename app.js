@@ -224,6 +224,13 @@ function renderQuestion() {
         }
     }
 
+    // すべてのタイプ共通で、任意フラグがあれば表示（multiInput以外でも表示されるようにする）
+    // 上記のmultiInput内の処理と重複しないよう、上記は削除し、
+    // ここで統一的に処理する形に変更します。
+    if (question.optional && question.type !== 'multiInput') {
+        html += `<p class="text-small" style="margin-top: 12px;">※ この質問は任意です。スキップも可能です。</p>`;
+    }
+
     html += `</div>`;
     container.innerHTML = html;
 
