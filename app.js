@@ -289,55 +289,54 @@ function attachQuestionEventListeners(question) {
         });
 
     } else if (question.type === 'checkbox') {
-        const checkboxOptions = document.querySelectorAll('.radio-option[data-type="checkbox"]');
-        checkboxOptions.forEach(option => {
-            option.addEventListener('click', (e) => {
-                // デフォルトの動作を無効化して、全て手動で制御する
-                // これにより、ラベルテキストクリック時とチェックボックスクリック時の挙動を統一できる
-                e.preventDefault();
-
-                const value = option.dataset.value;
+        const checkboxes = document.querySelectorAll(`input[name="${question.id}"]`);
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const value = e.target.value;
+                const isChecked = e.target.checked;
                 let currentAnswers = state.answers[question.id] || [];
 
-                // 既に選択されているかチェック
-                if (currentAnswers.includes(value)) {
-                    currentAnswers = currentAnswers.filter(v => v !== value);
-                    option.classList.remove('selected');
-                    const checkbox = option.querySelector('input[type="checkbox"]');
-                    if (checkbox) checkbox.checked = false;
-                } else {
-                    if (value === 'none') {
-                        // 「特になし」が選ばれたら他をクリア
-                        currentAnswers = ['none'];
-                        checkboxOptions.forEach(opt => {
-                            if (opt.dataset.value !== 'none') {
-                                opt.classList.remove('selected');
-                                const cb = opt.querySelector('input[type="checkbox"]');
-                                if (cb) cb.checked = false;
+                // 選択状態の更新ロジック
+                if (value === 'none') {
+                    if (isChecked) {
+                        // 「特になし」を選択：他をすべて解除
+                        checkboxes.forEach(cb => {
+                            if (cb.value !== 'none') {
+                                cb.checked = false; // DOMの状態更新
+                                cb.closest('.radio-option').classList.remove('selected'); // 見た目の更新
                             }
                         });
-                        option.classList.add('selected');
-                        const checkbox = option.querySelector('input[type="checkbox"]');
-                        if (checkbox) checkbox.checked = true;
-
+                        currentAnswers = ['none'];
                     } else {
-                        // 通常の選択（特になし、を解除）
-                        currentAnswers = currentAnswers.filter(v => v !== 'none');
-                        const noneOption = document.querySelector('.radio-option[data-value="none"]');
-                        if (noneOption) {
-                            noneOption.classList.remove('selected');
-                            const cb = noneOption.querySelector('input[type="checkbox"]');
-                            if (cb) cb.checked = false;
+                        currentAnswers = [];
+                    }
+                } else {
+                    if (isChecked) {
+                        // 通常選択：「特になし」が選択されていたら解除
+                        const noneCb = document.querySelector(`input[name="${question.id}"][value="none"]`);
+                        if (noneCb && noneCb.checked) {
+                            noneCb.checked = false;
+                            noneCb.closest('.radio-option').classList.remove('selected');
+                            currentAnswers = currentAnswers.filter(v => v !== 'none');
                         }
-
-                        currentAnswers.push(value);
-                        option.classList.add('selected');
-                        const checkbox = option.querySelector('input[type="checkbox"]');
-                        if (checkbox) checkbox.checked = true;
+                        // 重複を防いで追加
+                        if (!currentAnswers.includes(value)) {
+                            currentAnswers.push(value);
+                        }
+                    } else {
+                        currentAnswers = currentAnswers.filter(v => v !== value);
                     }
                 }
 
+                // State更新
                 state.answers[question.id] = currentAnswers;
+
+                // 自身の見た目を更新（他要素の見た目更新は上のロジックで行っている）
+                if (isChecked) {
+                    checkbox.closest('.radio-option').classList.add('selected');
+                } else {
+                    checkbox.closest('.radio-option').classList.remove('selected');
+                }
             });
         });
 
@@ -636,6 +635,44 @@ function generateWarnings(answers) {
         });
     }
 
+    // 体質（寒がり・虫嫌い）に基づく警告
+    const constitution = answers.constitution || [];
+
+    if (constitution.includes('cold')) {
+        // 木造・軽量鉄骨への警告
+        const conditions = answers.propertyConditions || {};
+        if (conditions.structure && (conditions.structure.includes('木造') || conditions.structure.includes('軽量鉄骨'))) {
+            warnings.push({
+                title: '寒がり体質への注意',
+                risk: '木造・軽量鉄骨は断熱性が低く、冬場の寒さが厳しい傾向があります。',
+                parentConcern: '光熱費の高騰や体調管理が心配です。',
+                severity: 'high'
+            });
+        }
+        // 1階への警告
+        if (conditions.floor && parseInt(conditions.floor) === 1) {
+            warnings.push({
+                title: '1階の底冷え',
+                risk: '1階は地面からの冷気が伝わりやすく、特に冬場は足元が冷えます。',
+                parentConcern: '冷え性なら2階以上推奨です。',
+                severity: 'medium'
+            });
+        }
+    }
+
+    if (constitution.includes('bugs')) {
+        // 1階への警告
+        const conditions = answers.propertyConditions || {};
+        if (conditions.floor && parseInt(conditions.floor) === 1) {
+            warnings.push({
+                title: '害虫リスク（1階）',
+                risk: '1階は地面に近く、虫の侵入リスクが最も高い階数です。',
+                parentConcern: '虫嫌いなら避けるべきポイントです。',
+                severity: 'critical'
+            });
+        }
+    }
+
     return warnings;
 }
 
@@ -675,6 +712,42 @@ function generateRecommendations(answers) {
         recommendations.push({
             title: '大手管理会社の物件',
             reason: '親の信頼を得やすい。トラブル対応も安心。'
+        });
+    }
+
+    // 自炊頻度に基づく推奨
+    if (answers.cookingFrequency === 'daily') {
+        recommendations.push({
+            title: '2口コンロ・調理スペース重視',
+            reason: '自炊派には必須。1口コンロだと自炊が続きません。'
+        });
+        recommendations.push({
+            title: 'スーパー徒歩5分以内',
+            reason: '重い荷物を持って歩く時間を減らすため。'
+        });
+    } else if (answers.cookingFrequency === 'rarely') {
+        recommendations.push({
+            title: 'ミニキッチンで家賃節約',
+            reason: '料理をしないなら、キッチンが狭い物件を選んで家賃を下げるのアリ。'
+        });
+    }
+
+    // 体質に基づく推奨
+    const constitution = answers.constitution || [];
+    if (constitution.includes('cold') || constitution.includes('heat')) {
+        recommendations.push({
+            title: 'RC造・SRC造（断熱性）',
+            reason: '外気温の影響を受けにくく、エアコン効率が良い。'
+        });
+    }
+    if (constitution.includes('bugs')) {
+        recommendations.push({
+            title: '2階以上',
+            reason: '地面から離れるだけで虫の遭遇率は激減します。'
+        });
+        recommendations.push({
+            title: '飲食店が近くにない',
+            reason: '1階が飲食店の物件はゴキブリなどのリスクが高いため避ける。'
         });
     }
 
