@@ -440,8 +440,8 @@ const DIAGNOSIS_QUESTIONS = [
     },
     {
         id: 'constitution',
-        question: '体質や生活で特に気になることはありますか？（任意）',
-        type: 'select',
+        question: '体質や生活で特に気になることはありますか？（任意・複数回答可）',
+        type: 'checkbox',
         options: [
             { value: 'cold', label: 'ひどい寒がり・冷え性' },
             { value: 'heat', label: '暑がり・汗かき' },

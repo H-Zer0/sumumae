@@ -201,6 +201,25 @@ function renderQuestion() {
         });
         html += `</div>`;
 
+    } else if (question.type === 'checkbox') {
+        html += `<div class="radio-group">`;
+        question.options.forEach((option) => {
+            const currentAnswers = state.answers[question.id] || [];
+            const isSelected = currentAnswers.includes(option.value);
+            html += `
+        <label class="radio-option ${isSelected ? 'selected' : ''}" data-value="${option.value}" data-type="checkbox">
+          <input 
+            type="checkbox" 
+            name="${question.id}" 
+            value="${option.value}"
+            ${isSelected ? 'checked' : ''}
+          />
+          <span>${option.label}</span>
+        </label>
+      `;
+        });
+        html += `</div>`;
+
     } else if (question.type === 'multiInput') {
         html += `<div class="form-group">`;
         question.fields.forEach(field => {
@@ -266,6 +285,64 @@ function attachQuestionEventListeners(question) {
                 // ラジオボタンもチェック
                 const radio = option.querySelector('input[type="radio"]');
                 if (radio) radio.checked = true;
+            });
+        });
+
+    } else if (question.type === 'checkbox') {
+        const checkboxOptions = document.querySelectorAll('.radio-option[data-type="checkbox"]');
+        checkboxOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                // ラベルクリック時のデフォルト動作（チェックボックスの反転）を妨げないようにする
+                // ただし、カスタムデザインの場合は自分で制御が必要なこともある
+                // ここでは、inputへのクリックが伝播してくるのを考慮
+                if (e.target.tagName === 'INPUT') {
+                    e.stopPropagation(); // input自体のクリックイベントはここで止めて、以下のロジックで処理
+                } else {
+                    // e.preventDefault(); // ラベルのデフォルト動作を止めて自分で制御する場合
+                }
+
+                const value = option.dataset.value;
+                let currentAnswers = state.answers[question.id] || [];
+
+                // 既に選択されているかチェック
+                if (currentAnswers.includes(value)) {
+                    currentAnswers = currentAnswers.filter(v => v !== value);
+                    option.classList.remove('selected');
+                    const checkbox = option.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = false;
+                } else {
+                    if (value === 'none') {
+                        // 「特になし」が選ばれたら他をクリア
+                        currentAnswers = ['none'];
+                        checkboxOptions.forEach(opt => {
+                            if (opt.dataset.value !== 'none') {
+                                opt.classList.remove('selected');
+                                const cb = opt.querySelector('input[type="checkbox"]');
+                                if (cb) cb.checked = false;
+                            }
+                        });
+                        option.classList.add('selected');
+                        const checkbox = option.querySelector('input[type="checkbox"]');
+                        if (checkbox) checkbox.checked = true;
+
+                    } else {
+                        // 通常の選択（特になし、を解除）
+                        currentAnswers = currentAnswers.filter(v => v !== 'none');
+                        const noneOption = document.querySelector('.radio-option[data-value="none"]');
+                        if (noneOption) {
+                            noneOption.classList.remove('selected');
+                            const cb = noneOption.querySelector('input[type="checkbox"]');
+                            if (cb) cb.checked = false;
+                        }
+
+                        currentAnswers.push(value);
+                        option.classList.add('selected');
+                        const checkbox = option.querySelector('input[type="checkbox"]');
+                        if (checkbox) checkbox.checked = true;
+                    }
+                }
+
+                state.answers[question.id] = currentAnswers;
             });
         });
 
