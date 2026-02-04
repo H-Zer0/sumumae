@@ -375,61 +375,68 @@ const PARENT_SAFETY_WEIGHTS = {
 // 診断用の質問データ
 const DIAGNOSIS_QUESTIONS = [
     {
-        id: 'budget',
-        question: '家賃の予算はどれくらいですか？',
+        id: 'rentLimit',
+        question: '家賃（管理費込）の上限は？',
         type: 'slider',
         min: 30000,
         max: 150000,
         step: 5000,
         unit: '円',
         default: 60000,
-        advice: '一般的に手取りの3分の1以下が目安です。'
+        advice: '一般的に手取りの3分の1以下が目安と言われています。'
     },
     {
-        id: 'commute',
-        question: '通学・通勤時間はどれくらいまで許容できますか？',
+        id: 'income',
+        question: '毎月の手取り月収（仕送り含む）は？',
+        type: 'number',
+        unit: '万円',
+        placeholder: '例: 20',
+        optional: true,
+        advice: '未入力の場合は平均的な値（20万円）でシミュレーションします。'
+    },
+    {
+        id: 'commuteTime',
+        question: '学校・職場への「片道」通学・通勤時間は？',
+        type: 'number',
+        unit: '分',
+        placeholder: '例: 45',
+        advice: 'ドア・ツー・ドア（家を出てから着くまで）の時間で入力してください。'
+    },
+    {
+        id: 'commuteCount',
+        question: '週に何日通学・通勤しますか？',
         type: 'select',
         options: [
-            { value: '15min', label: '15分以内', score: 100 },
-            { value: '30min', label: '30分以内', score: 80 },
-            { value: '60min', label: '1時間以内', score: 50 },
-            { value: '60min+', label: '1時間以上でも可', score: 30 }
+            { value: '3', label: '週3日以下' },
+            { value: '4', label: '週4日' },
+            { value: '5', label: '週5日' },
+            { value: '6', label: '週6日以上' }
         ]
-    },
-    {
-        id: 'soundproofing',
-        question: '防音性はどれくらい重視しますか？',
-        type: 'slider',
-        min: 1,
-        max: 5,
-        step: 1,
-        labels: ['気にしない', '少し気になる', '普通', 'かなり重視', '絶対必要'],
-        default: 3
     },
     {
         id: 'nightReturn',
-        question: '夜遅く（22時以降）に帰宅する頻度は？',
+        question: '夜22時以降に帰宅する頻度は？',
         type: 'select',
         options: [
-            { value: 'daily', label: 'ほぼ毎日', risk: 'high' },
-            { value: '3-4times', label: '週3-4回', risk: 'medium' },
-            { value: '1-2times', label: '週1-2回', risk: 'low' },
-            { value: 'rarely', label: 'ほとんどない', risk: 'none' }
+            { value: 'daily', label: 'ほぼ毎日' },
+            { value: '3-4times', label: '週3-4回' },
+            { value: '1-2times', label: '週1-2回' },
+            { value: 'rarely', label: 'ほとんどない' }
         ]
     },
     {
-        id: 'parentInvolvement',
-        question: '親の関与度はどれくらいですか？',
+        id: 'sleepType',
+        question: 'あなたの起床・就寝タイプは？',
         type: 'select',
         options: [
-            { value: 'high', label: '高い（一緒に内見・契約に立ち会う）' },
-            { value: 'medium', label: '普通（相談はするが最終判断は自分）' },
-            { value: 'low', label: '低い（ほぼ自分で決める）' }
+            { value: 'morning', label: '朝型（早起きが得意）' },
+            { value: 'normal', label: '普通' },
+            { value: 'night', label: '夜型（深夜に活動しがち）' }
         ]
     },
     {
         id: 'cookingFrequency',
-        question: '自炊はどれくらいの頻度でする予定ですか？（任意）',
+        question: '自炊の頻度は？（任意）',
         type: 'select',
         options: [
             { value: 'daily', label: '週3回以上（本格的に料理したい）' },
@@ -439,11 +446,51 @@ const DIAGNOSIS_QUESTIONS = [
         optional: true
     },
     {
+        id: 'fixedCostPriority',
+        question: '毎月の固定費（家賃＋光熱費）をどれくらい抑えたい？',
+        type: 'select',
+        options: [
+            { value: 'high', label: '限界まで抑えたい（貯金重視）' },
+            { value: 'medium', label: '普通（生活の質とのバランス重視）' },
+            { value: 'low', label: '多少高くても快適さ重視' }
+        ]
+    },
+    {
+        id: 'soundproofing',
+        question: 'お部屋の防音性はどれくらい重視する？',
+        type: 'slider',
+        min: 1,
+        max: 5,
+        step: 1,
+        labels: ['気にしない', '少し気になる', '普通', 'かなり重視', '絶対必要'],
+        default: 3
+    },
+    {
+        id: 'securityAnxiety',
+        question: '夜道や防犯への不安感は？',
+        type: 'select',
+        options: [
+            { value: 'high', label: 'とても強い（少しでも不安要素を減らしたい）' },
+            { value: 'medium', label: '普通（最低限の対策はしたい）' },
+            { value: 'low', label: 'あまり気にならない' }
+        ]
+    },
+    {
+        id: 'parentInvolvement',
+        question: '親の関与度は？',
+        type: 'select',
+        options: [
+            { value: 'high', label: '高い（一緒に内見・契約に立ち会う）' },
+            { value: 'medium', label: '普通（相談はするが最終判断は自分）' },
+            { value: 'low', label: '低い（ほぼ自分で決める）' }
+        ]
+    },
+    {
         id: 'constitution',
-        question: '体質や生活で特に気になることはありますか？（任意・複数回答可）',
+        question: '体質や生活で気になる点（任意・複数可）',
         type: 'checkbox',
         options: [
-            { value: 'cold', label: 'ひどい寒がり・冷え性' },
+            { value: 'cold', label: '寒がり・冷え性' },
             { value: 'heat', label: '暑がり・汗かき' },
             { value: 'bugs', label: '虫がとにかく苦手' },
             { value: 'none', label: '特になし' }
@@ -452,16 +499,26 @@ const DIAGNOSIS_QUESTIONS = [
     },
     {
         id: 'propertyConditions',
-        question: '検討中の物件条件を教えてください（任意）',
+        question: '検討している物件の条件①（建物・設備）',
         type: 'multiInput',
         fields: [
-            { id: 'age', label: '築年数', unit: '年', placeholder: '例: 10' },
-            { id: 'floor', label: '階数', unit: '階', placeholder: '例: 2' },
+            { id: 'age', label: '築年数', unit: '年', placeholder: '例: 15' },
             { id: 'structure', label: '構造', placeholder: '例: 木造、RC' },
-            { id: 'stationDist', label: '駅徒歩', unit: '分', placeholder: '例: 10' },
-            { id: 'gas', label: 'ガス種別', placeholder: '例: 都市ガス、プロパン' }
+            { id: 'floor', label: '階数', unit: '階', placeholder: '例: 2' },
+            { id: 'elevator', label: 'エレベーター', placeholder: '例: 有、無' }
         ],
-        optional: true
+        optional: false
+    },
+    {
+        id: 'locationConditions',
+        question: '検討している物件の条件②（立地・設備）',
+        type: 'multiInput',
+        fields: [
+            { id: 'stationDist', label: '駅徒歩', unit: '分', placeholder: '例: 10' },
+            { id: 'gas', label: 'ガス種別', placeholder: '例: 都市ガス、プロパン' },
+            { id: 'laundry', label: '洗濯機置き場', placeholder: '例: 室内、室外' }
+        ],
+        optional: false
     }
 ];
 

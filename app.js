@@ -183,6 +183,27 @@ function renderQuestion() {
             html += `<p class="text-small" style="margin-top: 16px;">💡 ${question.advice}</p>`;
         }
 
+    } else if (question.type === 'number') {
+        const currentValue = state.answers[question.id] || '';
+        html += `
+        <div class="form-group">
+            <div style="position: relative;">
+                <input 
+                    type="number" 
+                    class="form-input" 
+                    id="${question.id}" 
+                    placeholder="${question.placeholder || ''}"
+                    value="${currentValue}"
+                    min="0"
+                />
+                ${question.unit ? `<span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--color-text-secondary);">${question.unit}</span>` : ''}
+            </div>
+        </div>
+        `;
+        if (question.advice) {
+            html += `<p class="text-small" style="margin-top: 8px;">💡 ${question.advice}</p>`;
+        }
+
     } else if (question.type === 'select') {
         html += `<div class="radio-group">`;
         question.options.forEach((option, index) => {
@@ -269,6 +290,14 @@ function attachQuestionEventListeners(question) {
             const value = parseInt(e.target.value);
             state.answers[question.id] = value;
             valueDisplay.textContent = formatSliderValue(value, question);
+        });
+
+    } else if (question.type === 'number') {
+        const input = document.getElementById(question.id);
+        input?.addEventListener('input', (e) => {
+            const val = e.target.value;
+            // 数値変換。空文字なら保存しないか、空文字のまま保存
+            state.answers[question.id] = val === '' ? '' : Number(val);
         });
 
     } else if (question.type === 'select') {
@@ -415,345 +444,187 @@ function nextQuestion() {
 function calculateResult() {
     const answers = state.answers;
 
-    // 親安心度の計算
-    const parentSafetyScore = calculateParentSafety(answers);
+    // 1. 生活リズムシミュレーション
+    const lifeRhythm = simulateLifeRhythm(answers);
 
-    // 初心者適正度の計算
-    const beginnerScore = calculateBeginnerScore(answers);
+    // 2. 金銭シミュレーション
+    const moneySim = simulateMoney(answers);
 
-    // 注意点リストの生成
-    const warnings = generateWarnings(answers);
+    // 3. 安全・行動シミュレーション
+    const safetySim = simulateSafety(answers);
 
-    // おすすめ条件の生成
-    const recommendations = generateRecommendations(answers);
+    // 4. 一般的な注意点と対策
+    const { cautions, advice } = generateCautionsAndAdvice(answers);
 
     state.result = {
-        parentSafetyScore,
-        beginnerScore,
-        warnings,
-        recommendations,
+        conditions: answers,
+        simulation: {
+            rhythm: lifeRhythm,
+            money: moneySim,
+            safety: safetySim
+        },
+        cautions,
+        advice,
         timestamp: Date.now()
     };
 }
 
-function calculateParentSafety(answers) {
-    let score = 50; // ベーススコア
+// === シミュレーションロジック ===
 
-    // 夜間帰宅頻度
-    const nightReturnScores = {
-        'daily': -20,
-        '3-4times': -10,
-        '1-2times': 0,
-        'rarely': 10
-    };
-    score += nightReturnScores[answers.nightReturn] || 0;
+function simulateLifeRhythm(answers) {
+    // 通勤・通学時間（往復 + 準備60分）
+    const commuteOneWay = answers.commuteTime || 0;
+    const commuteCount = answers.commuteCount ? parseInt(answers.commuteCount) : 5;
+    const dailyCommuteLoss = (commuteOneWay * 2) + 60; // 往復+準備
+    const monthlyCommuteHours = (dailyCommuteLoss * commuteCount * 4) / 60; // 月間拘束時間（時間）
 
-    // 親の関与度
-    const parentInvolvementScores = {
-        'high': 20,
-        'medium': 10,
-        'low': 0
-    };
-    score += parentInvolvementScores[answers.parentInvolvement] || 0;
-
-    // 物件条件からの加点・減点
-    if (answers.propertyConditions) {
-        const conditions = answers.propertyConditions;
-
-        // 階数
-        if (conditions.floor) {
-            const floor = parseInt(conditions.floor);
-            if (floor === 1) score -= 20;
-            else if (floor >= 3) score += 10;
-        }
-
-        // 構造
-        if (conditions.structure) {
-            if (conditions.structure.includes('RC') || conditions.structure.includes('SRC')) {
-                score += 15;
-            } else if (conditions.structure.includes('木造')) {
-                score -= 10;
-            }
-        }
-
-        // ガス種別
-        if (conditions.gas) {
-            if (conditions.gas.includes('都市')) score += 10;
-            else if (conditions.gas.includes('プロパン')) score -= 5;
-        }
-
-        // 駅距離
-        if (conditions.stationDist) {
-            const dist = parseInt(conditions.stationDist);
-            if (dist <= 5) score += 10;
-            else if (dist >= 15) score -= 10;
-        }
+    // 睡眠タイプ判定
+    let sleepComment = "";
+    if (answers.sleepType === 'morning') {
+        sleepComment = "朝型なので、日当たりの良い東向き・南向きの部屋だと快適に起きられます。";
+    } else if (answers.sleepType === 'night') {
+        sleepComment = "夜型生活になりがちなので、遮光カーテンや防音性が睡眠の質を左右します。";
+    } else {
+        sleepComment = "標準的な生活リズムです。";
     }
 
-    // 0-100の範囲に収める
-    return Math.max(0, Math.min(100, score));
+    return {
+        dailyLoss: dailyCommuteLoss,
+        monthlyLoss: Math.round(monthlyCommuteHours),
+        sleepType: answers.sleepType,
+        comment: sleepComment
+    };
 }
 
-function calculateBeginnerScore(answers) {
-    let score = 50; // ベーススコア
+function simulateMoney(answers) {
+    const rentLimit = answers.rentLimit || 60000;
+    const income = answers.income ? (answers.income * 10000) : 200000; // デフォルト20万
 
-    // 家賃予算（適正範囲かどうか）
-    const budget = answers.budget;
-    if (budget >= 50000 && budget <= 80000) {
-        score += 15; // 適正範囲
-    } else if (budget < 40000) {
-        score -= 20; // 安すぎる（リスク高）
-    } else if (budget > 100000) {
-        score -= 10; // 高すぎる（固定費負担大）
+    // 固定費計算ルール: 家賃 + 管理費(仮5000) + 光熱費(仮10000)
+    // ユーザー入力が「家賃(管理費込)」なので、管理費は内包とみなすか別途加算するか？
+    // 設問が「家賃（管理費込）の上限」なので、rentLimitをそのまま使用。
+    // 光熱費・通信費等の概算として +1.5万しておく
+    const estimatedUtilities = 15000;
+    const totalFixedCost = rentLimit + estimatedUtilities;
+
+    const disposable = Math.max(0, income - totalFixedCost);
+    const ratio = Math.round((totalFixedCost / income) * 100);
+
+    let comment = "";
+    if (ratio > 40) {
+        comment = "一般的に固定費は手取りの30%前後が目安です。少し生活費の工夫が必要になるかもしれません。";
+    } else if (ratio < 25) {
+        comment = "余裕のある資金計画です。趣味や貯金に回せる金額が多くなります。";
+    } else {
+        comment = "バランスの取れた資金計画と言えます。";
     }
 
-    // 防音重視度
-    const soundproofing = answers.soundproofing;
-    if (soundproofing >= 4) {
-        score += 10; // 防音を重視している
-    }
-
-    // 通勤時間
-    const commuteScores = {
-        '15min': 15,
-        '30min': 10,
-        '60min': 0,
-        '60min+': -10
+    return {
+        totalFixedCost,
+        disposable,
+        ratio,
+        comment
     };
-    score += commuteScores[answers.commute] || 0;
-
-    // 物件条件からの評価
-    if (answers.propertyConditions) {
-        const conditions = answers.propertyConditions;
-
-        // 築年数
-        if (conditions.age) {
-            const age = parseInt(conditions.age);
-            if (age <= 5) score += 10;
-            else if (age >= 30) score -= 10;
-        }
-
-        // 構造
-        if (conditions.structure) {
-            if (conditions.structure.includes('RC')) score += 10;
-            else if (conditions.structure.includes('木造')) score -= 5;
-        }
-    }
-
-    return Math.max(0, Math.min(100, score));
 }
 
-function generateWarnings(answers) {
-    const warnings = [];
+function simulateSafety(answers) {
+    const nightReturn = answers.nightReturn;
+    const securityAnxiety = answers.securityAnxiety;
 
-    // 物件条件に基づく警告
-    if (answers.propertyConditions) {
-        const conditions = answers.propertyConditions;
+    let advice = [];
 
-        // 構造
-        if (conditions.structure) {
-            const structureKey = Object.keys(SPEC_RISK_TRANSLATOR.structure).find(key =>
-                conditions.structure.includes(key)
-            );
-            if (structureKey) {
-                const structureInfo = SPEC_RISK_TRANSLATOR.structure[structureKey];
-                if (structureInfo.severity === 'high' || structureInfo.severity === 'critical') {
-                    warnings.push({
-                        title: `構造: ${structureKey}`,
-                        risk: structureInfo.lifeRisk,
-                        parentConcern: structureInfo.parentConcern,
-                        severity: structureInfo.severity
-                    });
-                }
-            }
-        }
+    if (nightReturn === 'daily' || nightReturn === '3-4times') {
+        advice.push("夜間の帰宅が多いため、駅からのルートに街灯があるか、人通りがあるかが重要になります。");
+    }
 
-        // 階数
-        if (conditions.floor) {
-            const floor = parseInt(conditions.floor);
-            const floorKey = floor === 1 ? 1 : floor === 2 ? 2 : '3以上';
-            const floorInfo = SPEC_RISK_TRANSLATOR.floor[floorKey];
-            if (floorInfo && (floorInfo.severity === 'high' || floorInfo.severity === 'critical')) {
-                warnings.push({
-                    title: `階数: ${floor}階`,
-                    risk: floorInfo.lifeRisk,
-                    parentConcern: floorInfo.parentConcern,
-                    severity: floorInfo.severity
-                });
-            }
-        }
+    if (securityAnxiety === 'high') {
+        advice.push("防犯意識が高いため、2階以上やオートロック、モニター付きインターホンがあると安心感が違います。");
+    }
 
-        // ガス種別
-        if (conditions.gas && conditions.gas.includes('プロパン')) {
-            const gasInfo = SPEC_RISK_TRANSLATOR.gas['プロパン'];
-            warnings.push({
-                title: 'ガス: プロパンガス',
-                risk: gasInfo.lifeRisk,
-                parentConcern: gasInfo.parentConcern,
-                severity: gasInfo.severity
+    return {
+        nightFreq: nightReturn,
+        anxiety: securityAnxiety,
+        advice: advice
+    };
+}
+
+function generateCautionsAndAdvice(answers) {
+    const cautions = [];
+    const advicePoints = [];
+
+    // --- 構造・防音 ---
+    if (answers.propertyConditions && answers.propertyConditions.structure) {
+        const str = answers.propertyConditions.structure;
+        const soundScore = answers.soundproofing || 3;
+
+        if ((str.includes('木造') || str.includes('軽量鉄骨')) && soundScore >= 4) {
+            cautions.push({
+                title: '防音性と構造のギャップ',
+                text: '木造や軽量鉄骨は、一般的にRC造に比べて音が響きやすいと言われています。音に敏感な場合は、内見時に隣の音の響きを確認することをお勧めします。'
             });
         }
+    }
 
-        // 駅距離
-        if (conditions.stationDist) {
-            const dist = parseInt(conditions.stationDist);
-            let distKey;
-            if (dist <= 5) distKey = '5分以内';
-            else if (dist <= 10) distKey = '10分以内';
-            else if (dist <= 15) distKey = '15分以内';
-            else distKey = '15分以上';
+    // --- 階数・虫・防犯 ---
+    if (answers.propertyConditions && answers.propertyConditions.floor) {
+        const floor = parseInt(answers.propertyConditions.floor);
+        const constitution = answers.constitution || [];
 
-            const distInfo = SPEC_RISK_TRANSLATOR.stationDistance[distKey];
-            if (distInfo && distInfo.severity === 'high') {
-                warnings.push({
-                    title: `駅徒歩: ${dist}分`,
-                    risk: distInfo.lifeRisk,
-                    parentConcern: distInfo.parentConcern,
-                    severity: distInfo.severity
+        if (floor === 1) {
+            if (constitution.includes('bugs')) {
+                cautions.push({
+                    title: '1階と虫対策',
+                    text: '1階は地面に近いため、上層階に比べると虫と遭遇する可能性が高いと言われています。防虫対策をしっかり行うのがお勧めです。'
+                });
+            }
+            if (constitution.includes('cold')) {
+                cautions.push({
+                    title: '1階の冷気',
+                    text: '1階は地面からの冷気が伝わりやすい傾向があります。厚手のカーペットなどで底冷え対策をすると快適に過ごせます。'
+                });
+            }
+            if (answers.securityAnxiety === 'high') {
+                cautions.push({
+                    title: '1階の防犯',
+                    text: '防犯面を重視される場合、1階は外からの視線が気になることがあります。遮光カーテンやシャッターの有無を確認すると安心です。'
                 });
             }
         }
     }
 
-    // 夜間帰宅頻度に基づく警告
-    if (answers.nightReturn === 'daily' || answers.nightReturn === '3-4times') {
-        warnings.push({
-            title: '夜間帰宅が多い傾向',
-            risk: '夜道の安全性を重視する傾向があります。街灯が多いルート、交番が近い物件を検討されることをおすすめします。',
-            parentConcern: '親が心配されやすいポイントです。内見時に夜の雰囲気も確認されると安心です。',
-            severity: 'high'
-        });
-    }
-
-    // 予算に基づく警告
-    if (answers.budget < 40000) {
-        warnings.push({
-            title: '家賃が低めの設定',
-            risk: '極端に安い物件は、築年数が古い、設備が不十分、立地が悪いなどの傾向があります。',
-            parentConcern: '安全性や生活環境について、より慎重な確認が必要な場合があります。',
-            severity: 'medium'
-        });
-    }
-
-    // 体質（寒がり・虫嫌い）に基づく警告
-    const constitution = answers.constitution || [];
-
-    if (constitution.includes('cold')) {
-        // 木造・軽量鉄骨への警告
-        const conditions = answers.propertyConditions || {};
-        if (conditions.structure && (conditions.structure.includes('木造') || conditions.structure.includes('軽量鉄骨'))) {
-            warnings.push({
-                title: '寒がり体質への注意',
-                risk: '木造・軽量鉄骨は断熱性が低く、冬場の寒さが厳しい傾向があります。',
-                parentConcern: '光熱費の高騰や体調管理が心配です。',
-                severity: 'high'
-            });
-        }
-        // 1階への警告
-        if (conditions.floor && parseInt(conditions.floor) === 1) {
-            warnings.push({
-                title: '1階の底冷え',
-                risk: '1階は地面からの冷気が伝わりやすく、特に冬場は足元が冷えます。',
-                parentConcern: '冷え性なら2階以上推奨です。',
-                severity: 'medium'
-            });
-        }
-    }
-
-    if (constitution.includes('bugs')) {
-        // 1階への警告
-        const conditions = answers.propertyConditions || {};
-        if (conditions.floor && parseInt(conditions.floor) === 1) {
-            warnings.push({
-                title: '害虫リスク（1階）',
-                risk: '1階は地面に近く、虫の侵入リスクが最も高い階数です。',
-                parentConcern: '虫嫌いなら避けるべきポイントです。',
-                severity: 'critical'
-            });
-        }
-    }
-
-    return warnings;
-}
-
-function generateRecommendations(answers) {
-    const recommendations = [];
-
-    // 防音重視度に基づく推奨
-    if (answers.soundproofing >= 4) {
-        recommendations.push({
-            title: 'RC造・SRC造を選ぶ',
-            reason: '防音性が高く、隣人の生活音が気になりにくい。'
-        });
-    }
-
-    // 夜間帰宅頻度に基づく推奨
-    if (answers.nightReturn === 'daily' || answers.nightReturn === '3-4times') {
-        recommendations.push({
-            title: '2階以上 + オートロック',
-            reason: '防犯面で安心。親も納得しやすい。'
-        });
-        recommendations.push({
-            title: '駅徒歩10分以内',
-            reason: '夜道が短く、安全性が高い。'
-        });
-    }
-
-    // 予算に基づく推奨
-    if (answers.budget >= 60000) {
-        recommendations.push({
-            title: '都市ガス物件',
-            reason: 'ランニングコストを抑えられる。プロパンガスの2〜3倍の差。'
-        });
-    }
-
-    // 親の関与度に基づく推奨
-    if (answers.parentInvolvement === 'high') {
-        recommendations.push({
-            title: '大手管理会社の物件',
-            reason: '親の信頼を得やすい。トラブル対応も安心。'
-        });
-    }
-
-    // 自炊頻度に基づく推奨
+    // --- 自炊 ---
     if (answers.cookingFrequency === 'daily') {
-        recommendations.push({
-            title: '2口コンロ・調理スペース重視',
-            reason: '自炊派には必須。1口コンロだと自炊が続きません。'
-        });
-        recommendations.push({
-            title: 'スーパー徒歩5分以内',
-            reason: '重い荷物を持って歩く時間を減らすため。'
-        });
-    } else if (answers.cookingFrequency === 'rarely') {
-        recommendations.push({
-            title: 'ミニキッチンで家賃節約',
-            reason: '料理をしないなら、キッチンが狭い物件を選んで家賃を下げるのアリ。'
+        advicePoints.push({
+            title: '自炊派のキッチン選び',
+            text: '料理を頻繁にする場合、コンロ数や調理スペースの広さが満足度に直結します。まな板を置くスペースがあるか確認すると良いでしょう。'
         });
     }
 
-    // 体質に基づく推奨
-    const constitution = answers.constitution || [];
-    if (constitution.includes('cold') || constitution.includes('heat')) {
-        recommendations.push({
-            title: 'RC造・SRC造（断熱性）',
-            reason: '外気温の影響を受けにくく、エアコン効率が良い。'
-        });
+    // --- 立地 ---
+    if (answers.locationConditions && answers.locationConditions.stationDist) {
+        const dist = parseInt(answers.locationConditions.stationDist);
+        if (dist >= 15) {
+            cautions.push({
+                title: '駅徒歩15分以上の距離',
+                text: '特に雨の日や荷物が多い日は、移動が大変に感じることがあるかもしれません。自転車の利用も検討すると良いでしょう。'
+            });
+        }
     }
-    if (constitution.includes('bugs')) {
-        recommendations.push({
-            title: '2階以上',
-            reason: '地面から離れるだけで虫の遭遇率は激減します。'
-        });
-        recommendations.push({
-            title: '飲食店が近くにない',
-            reason: '1階が飲食店の物件はゴキブリなどのリスクが高いため避ける。'
+
+    // --- プロパンガス ---
+    if (answers.locationConditions && answers.locationConditions.gas && answers.locationConditions.gas.includes('プロパン')) {
+        cautions.push({
+            title: 'プロパンガスのコスト',
+            text: 'プロパンガスは都市ガスに比べて基本料金が高くなる傾向があります。冬場のガス代などは少し多めに見積もっておくと安心です。'
         });
     }
 
-    return recommendations;
+    return { cautions, advice: advicePoints };
 }
 
+// ==========================================
+// 結果表示
+// ==========================================
 // ==========================================
 // 結果表示
 // ==========================================
@@ -763,113 +634,93 @@ function renderResult() {
     const container = document.getElementById('result-container');
     if (!container) return;
 
-    const { parentSafetyScore, beginnerScore, warnings, recommendations } = state.result;
+    const { conditions, simulation, cautions, advice } = state.result;
 
-    // HTML構築
+    // ヘッダー: あなたの条件 (シンプルに整理)
     let html = `
-        <!-- 評価メーター -->
-        <div class="card">
-            <h2>総合評価</h2>
-            <div id="parent-safety-meter" class="meter-container"></div>
-            <div id="beginner-score-meter" class="meter-container"></div>
+        <div class="card fade-in">
+            <h2>あなたの条件整理</h2>
+            <div style="background: var(--color-bg-page); padding: 16px; border-radius: 8px;">
+                <ul style="list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <li><strong>家賃上限:</strong> ${conditions.rentLimit ? conditions.rentLimit.toLocaleString() : '---'}円</li>
+                    <li><strong>月収:</strong> ${conditions.income ? (conditions.income + '万円') : '20万円(仮)'}</li>
+                    <li><strong>通勤時間:</strong> ${conditions.commuteTime || '---'}分</li>
+                    <li><strong>出社頻度:</strong> 週${conditions.commuteCount || 5}日</li>
+                </ul>
+            </div>
         </div>
     `;
 
-    // 注意点リスト
+    // 2. この物件を選んだ場合の生活イメージ
     html += `
-        <div class="card">
-            <h2>注意すべきポイント</h2>
-            <p class="text-small" style="margin-bottom: 16px;">
-                以下の点に注意して物件を選びましょう。
-            </p>
-    `;
-
-    if (warnings.length === 0) {
-        html += '<p class="text-center">特に大きな注意点は見つかりませんでした。</p>';
-    } else {
-        html += warnings.map(warning => `
-            <div class="warning-item ${warning.severity}" style="border-left: 3px solid var(--color-accent-b); padding-left: 12px; margin-bottom: 12px; background: var(--color-bg-page);">
-                <div style="display: flex; align-items: start; gap: 8px;">
-                    <div class="warning-icon">${getSeverityIcon(warning.severity)}</div>
-                    <div>
-                        <div class="warning-title" style="font-weight: bold;">${warning.title}</div>
-                        <div class="text-small" style="color: var(--color-text-secondary); margin-top: 4px;">${warning.risk}</div>
-                        <div class="text-small" style="color: var(--color-text-tertiary); margin-top: 4px;"><strong>親の視点:</strong> ${warning.parentConcern}</div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-    html += '</div>';
-
-    // おすすめ条件
-    html += `
-        <div class="card">
-            <h2>おすすめの条件</h2>
-            <p class="text-small" style="margin-bottom: 16px;">
-                あなたに向いている物件条件です。
-            </p>
-    `;
-
-    if (recommendations.length === 0) {
-        html += '<p class="text-center">現在の条件で問題ありません。</p>';
-    } else {
-        html += recommendations.map(rec => `
-            <div style="margin-bottom: 16px; padding: 12px; background: var(--color-bg-page); border-radius: 8px;">
-                <h3 style="font-size: 16px; margin-bottom: 4px;">
-                    <svg width="16" height="16" style="vertical-align: middle; color: var(--color-text-primary); margin-right: 4px;"><use href="#icon-check-square"></use></svg>
-                    ${rec.title}
+        <div class="card fade-in">
+            <h2>この物件での生活イメージ</h2>
+            
+            <div style="margin-bottom: 24px;">
+                <h3 style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:20px;">⏰</span> 生活リズム・可処分時間
                 </h3>
-                <p class="text-small">${rec.reason}</p>
+                <p>1ヶ月あたりの通学・通勤拘束時間（準備時間含）は約 <strong class="numeric" style="font-size:1.2em; color:var(--color-accent-a);">${simulation.rhythm.monthlyLoss}</strong> 時間です。</p>
+                <p class="text-small">${simulation.rhythm.comment}</p>
             </div>
-        `).join('');
-    }
-    html += '</div>';
 
-    // 内見チェックリストへの誘導などが必要ならここに追加
+            <div style="margin-bottom: 24px;">
+                <h3 style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:20px;">💰</span> 金銭面のシミュレーション
+                </h3>
+                <p>固定費（家賃＋光熱費等目安）は月収の 約 <strong class="numeric" style="font-size:1.2em; ${simulation.money.ratio > 40 ? 'color:var(--color-accent-b);' : 'color:var(--color-accent-a);'}">${simulation.money.ratio}%</strong> を占める計算です。</p>
+                <p>自由に使えるお金（可処分所得）は目安として月 <strong>¥${simulation.money.disposable.toLocaleString()}</strong> 程度となります。</p>
+                <p class="text-small">${simulation.money.comment}</p>
+            </div>
+
+            <div>
+                <h3 style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:20px;">🛡️</span> 日常行動・安心感
+                </h3>
+                ${simulation.safety.advice.length > 0
+            ? simulation.safety.advice.map(text => `<p class="text-small" style="margin-bottom:8px;">・${text}</p>`).join('')
+            : '<p class="text-small">特段の懸念事項はありませんが、周辺環境はしっかり確認しましょう。</p>'}
+            </div>
+        </div>
+    `;
+
+    // 3. 条件から分かる一般的な注意点
+    html += `
+        <div class="card fade-in">
+            <h2>条件から分かる一般的な注意点</h2>
+            <p class="text-small">あなたの条件において、一般的に挙げられる注意点です。</p>
+            ${cautions.length > 0
+            ? cautions.map(c => `
+                    <div style="margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--color-divider);">
+                        <strong style="display:block; margin-bottom:4px;">${c.title}</strong>
+                        <span class="text-small">${c.text}</span>
+                    </div>`).join('')
+            : '<p class="text-small">現時点で目立った注意点は検出されませんでした。</p>'}
+        </div>
+    `;
+
+    // 4. 工夫すれば許容できるポイント
+    html += `
+        <div class="card fade-in">
+            <h2>工夫すれば許容できるポイント</h2>
+            <p class="text-small">少し視点を変えると、選択肢が広がるポイントです。</p>
+             ${advice.length > 0
+            ? advice.map(a => `
+                    <div style="margin-bottom:12px; padding:12px; background:var(--color-bg-page); border-radius:8px;">
+                        <strong style="display:block; margin-bottom:4px; color:var(--color-accent-a);">💡 ${a.title}</strong>
+                        <span class="text-small">${a.text}</span>
+                    </div>`).join('')
+            : '<p class="text-small">現在の条件でバランス良く探せそうです。</p>'}
+        </div>
+    `;
 
     container.innerHTML = html;
-
-    // メーター描画（HTML挿入後に実行）
-    renderMeter('parent-safety-meter', parentSafetyScore, '親安心度');
-    renderMeter('beginner-score-meter', beginnerScore, '初心者適正度');
 }
 
-function getSeverityColor(severity) {
-    // ユーザー要望により全て黒色またはグレー系に統一
-    // 深刻度に関わらず統一感を優先
-    return 'var(--color-text-primary)';
-}
-
-function renderMeter(containerId, score, label) {
-    const container = document.getElementById(containerId);
-    if (!container) return; // 親要素がなくてもエラーにしない
-
-    // メーターの色もモノトーン化する場合
-    // ここではあえて進捗バーとしての視認性を保つため既存のCSSクラスに依存するが、
-    // 配色変数の変更が必要ならCSS側で行う。一旦JS側での強制色指定はしない。
-    container.innerHTML = `
-    <div class="meter-label">
-      <span class="meter-title">${label}</span>
-      <span class="meter-score numeric">${score}<span style="font-size: 16px; font-family: var(--font-jp);">/100</span></span>
-    </div>
-    <div class="meter-bar">
-      <div class="meter-fill" style="width: ${score}%; background-color: var(--color-accent-a);"></div>
-    </div>
-  `;
-}
-
-function getSeverityIcon(severity) {
-    // 全てモノクロアイコンに統一
-    const colors = 'style="color: var(--color-text-primary)"';
-    const icons = {
-        critical: `<svg width="20" height="20" ${colors}><use href="#icon-alert-triangle"></use></svg>`,
-        high: `<svg width="20" height="20" ${colors}><use href="#icon-alert-triangle"></use></svg>`,
-        medium: `<svg width="20" height="20" ${colors}><use href="#icon-shield"></use></svg>`,
-        low: `<svg width="20" height="20" ${colors}><use href="#icon-check-square"></use></svg>`
-    };
-    return icons[severity] || icons.medium;
-}
+// 古いヘルパー関数（削除またはダミー化）
+function getSeverityColor(severity) { return ''; }
+function renderMeter(containerId, score, label) { }
+function getSeverityIcon(severity) { return ''; }
 
 // ==========================================
 // 用語解説
